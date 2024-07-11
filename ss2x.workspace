@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeLite_Workspace Name="ss2x" Database="" Version="10000">
+  <Project Name="ss2x" Path="ss2x.project" Active="Yes"/>
+  <Project Name="ss2xlog" Path="ss2xlog/ss2xlog.project"/>
+  <Project Name="ss2xicr" Path="ss2xicr/ss2xicr.project"/>
+  <Project Name="ss2xdata" Path="ss2xdata/ss2xdata.project"/>
+  <BuildMatrix>
+    <WorkspaceConfiguration Name="Debug" Selected="yes">
+      <Environment/>
+      <Project Name="ss2x" ConfigName="Debug"/>
+      <Project Name="ss2xlog" ConfigName="Debug"/>
+      <Project Name="ss2xicr" ConfigName="Debug"/>
+      <Project Name="ss2xdata" ConfigName="Debug"/>
+    </WorkspaceConfiguration>
+    <WorkspaceConfiguration Name="Release" Selected="yes">
+      <Environment/>
+      <Project Name="ss2x" ConfigName="Release"/>
+      <Project Name="ss2xlog" ConfigName="Release"/>
+      <Project Name="ss2xicr" ConfigName="Release"/>
+      <Project Name="ss2xdata" ConfigName="Release"/>
+    </WorkspaceConfiguration>
+  </BuildMatrix>
+</CodeLite_Workspace>
