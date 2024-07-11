@@ -91,6 +91,8 @@ public:
 	std::int8_t read_int8();
 	void write_uint32(std::uint32_t a_uint32);
 	std::uint32_t read_uint32();
+	void write_int32(std::int32_t a_int32);
+	std::int32_t read_int32();
 
 	std::uint32_t crc32(std::uint32_t a_crc);
 	data md5();

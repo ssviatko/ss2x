@@ -211,6 +211,29 @@ std::uint32_t data::read_uint32()
 	return l_ret.uint32_val;
 }
 
+void data::write_int32(std::int32_t a_int32)
+{
+	std::vector<std::uint8_t> l_pass;
+	size4_union l_work;
+	l_work.int32_val = a_int32;
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_work.int32_val = std::byteswap(l_work.int32_val);
+	}
+	l_pass.assign(l_work.raw, l_work.raw + 4);
+	write_raw_data(l_pass);
+}
+
+std::int32_t data::read_int32()
+{
+	std::vector<std::uint8_t> l_read = read_raw_data(sizeof(std::int32_t));
+	size4_union l_ret;
+	std::copy(l_read.begin(), l_read.end(), l_ret.raw);
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_ret.int32_val = std::byteswap(l_ret.int32_val);
+	}
+	return l_ret.int32_val;
+}
+
 const std::uint32_t data::crc32_tab[] = {
 	0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
 	0xe963a535, 0x9e6495a3,	0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,

@@ -132,6 +132,11 @@ int main(int argc, char **argv)
 	ss::data b;
 	b.write_int8(-3);
 	ctx.log(std::format("write -3, read as uint8: {}", b.read_uint8()));
+
+	ss::data d;
+	d.write_int32(-10);
+	std::int32_t dd = d.read_int32();
+	ctx.log(std::format("wrote -10 as int32, read {} (hex is {:x}", dd, static_cast<std::uint32_t>(dd)));
 	
 	ctx.unregister_thread();
 		ctx.log("thread should be missing");
