@@ -89,6 +89,12 @@ public:
 	std::uint8_t read_uint8();
 	void write_int8(std::int8_t a_int8);
 	std::int8_t read_int8();
+
+	void write_uint16(std::uint16_t a_uint16);
+	std::uint16_t read_uint16();
+	void write_int16(std::int16_t a_int16);
+	std::int16_t read_int16();
+	
 	void write_uint32(std::uint32_t a_uint32);
 	std::uint32_t read_uint32();
 	void write_int32(std::int32_t a_int32);

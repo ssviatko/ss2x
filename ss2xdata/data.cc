@@ -156,6 +156,8 @@ void data::set_read_cursor(std::size_t a_read_cursor)
 	m_read_cursor = a_read_cursor;
 }
 
+// 8
+
 void data::write_uint8(std::uint8_t a_uint8)
 {
 	std::vector<std::uint8_t> l_pass;
@@ -187,6 +189,56 @@ std::int8_t data::read_int8()
 	l_ret.uint8_val = l_read[0];
 	return l_ret.int8_val;
 }
+
+// 16
+
+void data::write_uint16(std::uint16_t a_uint16)
+{
+	std::vector<std::uint8_t> l_pass;
+	size2_union l_work;
+	l_work.uint16_val = a_uint16;
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_work.uint16_val = std::byteswap(l_work.uint16_val);
+	}
+	l_pass.assign(l_work.raw, l_work.raw + 2);
+	write_raw_data(l_pass);
+}
+
+std::uint16_t data::read_uint16()
+{
+	std::vector<std::uint8_t> l_read = read_raw_data(sizeof(std::uint16_t));
+	size2_union l_ret;
+	std::copy(l_read.begin(), l_read.end(), l_ret.raw);
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_ret.uint16_val = std::byteswap(l_ret.uint16_val);
+	}
+	return l_ret.uint16_val;
+}
+
+void data::write_int16(std::int16_t a_int16)
+{
+	std::vector<std::uint8_t> l_pass;
+	size2_union l_work;
+	l_work.int16_val = a_int16;
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_work.int16_val = std::byteswap(l_work.int16_val);
+	}
+	l_pass.assign(l_work.raw, l_work.raw + 2);
+	write_raw_data(l_pass);
+}
+
+std::int16_t data::read_int16()
+{
+	std::vector<std::uint8_t> l_read = read_raw_data(sizeof(std::int16_t));
+	size2_union l_ret;
+	std::copy(l_read.begin(), l_read.end(), l_ret.raw);
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_ret.int16_val = std::byteswap(l_ret.int16_val);
+	}
+	return l_ret.int16_val;
+}
+
+// 32
 
 void data::write_uint32(std::uint32_t a_uint32)
 {
@@ -233,6 +285,8 @@ std::int32_t data::read_int32()
 	}
 	return l_ret.int32_val;
 }
+
+// hashing
 
 const std::uint32_t data::crc32_tab[] = {
 	0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,

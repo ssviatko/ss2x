@@ -138,6 +138,21 @@ int main(int argc, char **argv)
 	std::int32_t dd = d.read_int32();
 	ctx.log(std::format("wrote -10 as int32, read {} (hex is {:x}", dd, static_cast<std::uint32_t>(dd)));
 	
+	// test 16 bit functions
+	ss::data e;
+	e.set_network_byte_order(true);
+	e.write_uint16(65535);
+	e.write_uint16(65534);
+	e.write_int16(-3);
+	e.write_int16(-4);
+	ctx.log(std::format("e contains {}", e.as_hex_str()));
+	// ludicrous... std;:format is calling these in reverse order!
+	ctx.log(std::format("numbers are {:x} {:x} {:x} {:x} {:x} {:x} {}", e.read_uint16(), e.read_uint8(), e.read_uint8(), e.read_uint16(), e.read_int16(), 0x9dbf, -112));
+	ctx.log(std::format("e read cursor: {} write cursor: {}", e.get_read_cursor(), e.get_write_cursor()));
+	e.set_read_cursor(0);
+	for (int i = 0; i < 4; ++i)
+		ctx.log(std::format("sequence {} is {:x}", i, e.read_uint16()));
+	
 	ctx.unregister_thread();
 		ctx.log("thread should be missing");
 	
