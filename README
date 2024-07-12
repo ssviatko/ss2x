@@ -1,0 +1,62 @@
+                                       SS Library
+                                      Release 2.0
+                                     (Standard 2x)
+
+(C) 2014, 2017, 2019, 2024
+All Rights Reserved
+
+Good Neighbors LLC
+5402 E. Grandview Rd.
+Scottsdale, AZ 85254
+
+                             Developed by: Stephen Sviatko
+                                  ssviatko@gmail.com
+
+INTRODUCTION
+
+The SS Library is a library of convenience classes for C++ that was begin in the late
+2000's in order to facilitate C++ development. It addresses the common needs of clients
+in the business world by automating commonly used program features, like logging, reading
+configuration files, simple event handling, timing, etc.
+
+As C++ itself developed and we got the more advanced features of C++11, 14, etc. some of
+the classes in the SS library became obsolete. Notable among these was the Concurrency
+Class Library, or CCL. The functionality of this libary has been entirely superceded by
+std::thread and friends.
+
+Even though C+= developed and got new features, some things have been continually broken
+over the years, and one of these things is time handling. Modern C++ has std::chrono and
+all it's related classes and support functions, but there is still a lot lacking that is
+handled by the SS "doubletime" class, which compresses a time point down to an IEEE
+double with the UNIX epoch seconds in the integral portion and microseconds in the
+fractional portion. I have found over many years of working that this is the most
+convenient way to represent a time point and arithmetic/comparisons are as easy as
+using floating point numbers.
+
+LICENSE
+
+This software is copyright 2014, 2017, 2019, 2024 by Good Neighbors LLC (contact
+information shown above). Permission is granted to use this software for non-commercial
+purposes. Any commercial usage of this software must be negotiated beforehand and
+must include my consulting services as part of the deployment strategy.
+
+This software is being made public primarily to show off my coding style and
+proficiency with modern C++. It appears on my Github page which can be thought of
+as an extension of my resume itself.
+
+LIBRARY FEATURES
+
+1. Logger
+
+2. Initialization/Configuration Registry
+
+3. Data class (encapsulates a C char* array)
+
+4. Doubletime
+
+5. Note Dispatcher (Heavyweight multithreaded notification dispatch system)
+
+6. Failure Services (Traps signals and issues callbacks, handles stack traces)
+
+(this file is a work in progress)
+
