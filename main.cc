@@ -152,6 +152,35 @@ int main(int argc, char **argv)
 	e.set_read_cursor(0);
 	for (int i = 0; i < 4; ++i)
 		ctx.log(std::format("sequence {} is {:x}", i, e.read_uint16()));
+		
+	// test 64 bit functions
+	ss::data f;
+	f.write_uint64(0xdeadbeefbeaddeef);
+	f.write_uint64(23);
+	f.write_int64(-2);
+	f.write_int64(-1000000);
+	ctx.log(std::format("f contains {}", f.as_hex_str()));
+	for (int i = 0; i <= 3; ++i)
+		ctx.log(std::format("seq {} is {:x}", i, f.read_uint64()));
+	
+	// test floats, doubles, long doubles
+	ss::data g;
+	g.write_float(3.1415926535F);
+	g.write_double(3.1415927653543212345678);
+	g.write_longdouble(3.141592653543212345678L);
+	ctx.log(std::format("g contains {}", g.as_hex_str()));
+	ctx.log(std::format("read float: {}", g.read_float()));
+	ctx.log(std::format("read double: {}", g.read_double()));
+	ctx.log(std::format("read long double: {}", g.read_longdouble()));
+	g.clear();
+	g.set_network_byte_order(true);
+	g.write_float(3.1415926535F);
+	g.write_double(3.1415927653543212345678);
+	g.write_longdouble(3.141592653543212345678L);
+	ctx.log(std::format("(network byte order) g contains {}", g.as_hex_str()));
+	ctx.log(std::format("read float: {}", g.read_float()));
+	ctx.log(std::format("read double: {}", g.read_double()));
+	ctx.log(std::format("read long double: {}", g.read_longdouble()));
 	
 	ctx.unregister_thread();
 		ctx.log("thread should be missing");

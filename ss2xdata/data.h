@@ -58,6 +58,11 @@ class data {
 		double double_val;
 		std::uint8_t raw[8];
 	} size8_union;
+	
+	typedef union {
+		long double longdouble_val;
+		std::uint8_t raw[16];
+	} size16_union;
 
 	std::vector<std::uint8_t> read_raw_data(std::size_t a_num_bytes);
 	void write_raw_data(std::vector<std::uint8_t>& a_vector);
@@ -84,6 +89,7 @@ public:
 	std::size_t size() { return m_buffer.size(); };
 
 	void fill(std::size_t a_num_bytes, std::uint8_t a_val);
+	void clear();
 	
 	void write_uint8(std::uint8_t a_uint8);
 	std::uint8_t read_uint8();
@@ -100,6 +106,19 @@ public:
 	void write_int32(std::int32_t a_int32);
 	std::int32_t read_int32();
 
+	void write_uint64(std::uint64_t a_uint64);
+	std::uint64_t read_uint64();
+	void write_int64(std::int64_t a_int64);
+	std::int64_t read_int64();
+
+	void write_float(float a_float);
+	float read_float();
+	void write_double(double a_double);
+	double read_double();
+	// note: platform-specific 16 byte double, ignores endianness setting
+	void write_longdouble(long double a_longdouble);
+	long double read_longdouble();
+	
 	std::uint32_t crc32(std::uint32_t a_crc);
 	data md5();
 	data sha1();

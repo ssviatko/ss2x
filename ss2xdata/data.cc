@@ -133,6 +133,13 @@ void data::fill(std::size_t a_num_bytes, std::uint8_t a_val)
 	write_raw_data(l_pass);
 }
 
+void data::clear()
+{
+	m_buffer.clear();
+	m_read_cursor = 0;
+	m_write_cursor = 0;
+}
+
 void data::set_write_cursor(std::size_t a_write_cursor)
 {
 	if (a_write_cursor > m_buffer.size()) {
@@ -284,6 +291,121 @@ std::int32_t data::read_int32()
 		l_ret.int32_val = std::byteswap(l_ret.int32_val);
 	}
 	return l_ret.int32_val;
+}
+
+// 64
+
+void data::write_uint64(std::uint64_t a_uint64)
+{
+	std::vector<std::uint8_t> l_pass;
+	size8_union l_work;
+	l_work.uint64_val = a_uint64;
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_work.uint64_val = std::byteswap(l_work.uint64_val);
+	}
+	l_pass.assign(l_work.raw, l_work.raw + 8);
+	write_raw_data(l_pass);
+}
+
+std::uint64_t data::read_uint64()
+{
+	std::vector<std::uint8_t> l_read = read_raw_data(sizeof(std::uint64_t));
+	size8_union l_ret;
+	std::copy(l_read.begin(), l_read.end(), l_ret.raw);
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_ret.uint64_val = std::byteswap(l_ret.uint64_val);
+	}
+	return l_ret.uint64_val;
+}
+
+void data::write_int64(std::int64_t a_int64)
+{
+	std::vector<std::uint8_t> l_pass;
+	size8_union l_work;
+	l_work.int64_val = a_int64;
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_work.int64_val = std::byteswap(l_work.int64_val);
+	}
+	l_pass.assign(l_work.raw, l_work.raw + 8);
+	write_raw_data(l_pass);
+}
+
+std::int64_t data::read_int64()
+{
+	std::vector<std::uint8_t> l_read = read_raw_data(sizeof(std::int64_t));
+	size8_union l_ret;
+	std::copy(l_read.begin(), l_read.end(), l_ret.raw);
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_ret.int64_val = std::byteswap(l_ret.int64_val);
+	}
+	return l_ret.int64_val;
+}
+
+// floats
+
+void data::write_float(float a_float)
+{
+	std::vector<std::uint8_t> l_pass;
+	size4_union l_work;
+	l_work.float_val = a_float;
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		// note: std::byteswap doesn't appear to work with float
+		l_work.uint32_val = std::byteswap(l_work.uint32_val);
+	}
+	l_pass.assign(l_work.raw, l_work.raw + 4);
+	write_raw_data(l_pass);
+}
+
+float data::read_float()
+{
+	std::vector<std::uint8_t> l_read = read_raw_data(sizeof(float));
+	size4_union l_ret;
+	std::copy(l_read.begin(), l_read.end(), l_ret.raw);
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_ret.uint32_val = std::byteswap(l_ret.uint32_val);
+	}
+	return l_ret.float_val;
+}
+
+void data::write_double(double a_double)
+{
+	std::vector<std::uint8_t> l_pass;
+	size8_union l_work;
+	l_work.double_val = a_double;
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		// note: std::byteswap doesn't appear to work with float
+		l_work.uint64_val = std::byteswap(l_work.uint64_val);
+	}
+	l_pass.assign(l_work.raw, l_work.raw + 8);
+	write_raw_data(l_pass);
+}
+
+double data::read_double()
+{
+	std::vector<std::uint8_t> l_read = read_raw_data(sizeof(double));
+	size8_union l_ret;
+	std::copy(l_read.begin(), l_read.end(), l_ret.raw);
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_ret.uint64_val = std::byteswap(l_ret.uint64_val);
+	}
+	return l_ret.double_val;
+}
+
+void data::write_longdouble(long double a_longdouble)
+{
+	std::vector<std::uint8_t> l_pass;
+	size16_union l_work;
+	l_work.longdouble_val = a_longdouble;
+	l_pass.assign(l_work.raw, l_work.raw + 16);
+	write_raw_data(l_pass);
+}
+
+long double data::read_longdouble()
+{
+	std::vector<std::uint8_t> l_read = read_raw_data(sizeof(long double));
+	size16_union l_ret;
+	std::copy(l_read.begin(), l_read.end(), l_ret.raw);
+	return l_ret.longdouble_val;
 }
 
 // hashing
