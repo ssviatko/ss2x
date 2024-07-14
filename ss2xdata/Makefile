@@ -7,7 +7,7 @@ CPP := g++
 LD := g++
 LDFLAGS = -lpthread -Wl,-rpath=/usr/local/lib64 -shared -Wl,-soname,libss2xdata.so.1 -rdynamic
 
-OBJS = data.o md5.o sha1.o sha2.o
+OBJS = data.o md5.o sha1.o sha2.o bf.o
 
 all: libss2xdata
 

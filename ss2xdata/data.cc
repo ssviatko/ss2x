@@ -204,6 +204,13 @@ void data::truncate(std::size_t a_new_len)
 		m_read_cursor = a_new_len;
 }
 
+void data::assign(std::uint8_t *a_buffer, std::size_t a_len)
+{
+	for (size_t i = 0; i < a_len; ++i) {
+		write_uint8(a_buffer[i]);
+	}
+}
+
 void data::set_write_cursor(std::size_t a_write_cursor)
 {
 	if (a_write_cursor > m_buffer.size()) {
@@ -635,6 +642,41 @@ data data::bf_key_schedule(const std::string& a_string)
 	data l_hash = l_work.sha2_512();
 	l_hash.truncate(56);
 	return l_hash;
+}
+
+data data::bf_block_encrypt(data& a_block, data& a_key)
+{
+	// enforce size constraints on block and key
+	if (a_block.size() != 8) {
+		data_exception e("Blowfish block must be 8 bytes in length.");
+		throw (e);
+	}
+	if ((a_key.size() < 8) || (a_key.size() > 56)) {
+		data_exception e("Blowfish key must be between 8 and 56 bytes in length.");
+		throw (e);
+	}
+	ss::bf::block l_work(a_block.m_buffer.data(), a_key.m_buffer.data(), a_key.size());
+	l_work.encrypt();
+	data l_ret;
+	const std::uint8_t *blockdata = l_work.get_blockdata();
+	for (int i = 0; i < 8; ++i)
+		l_ret.write_uint8(blockdata[i]);
+	return l_ret;
+}
+
+data data::bf_block_decrypt(data& a_block, data& a_key)
+{
+	// enforce size constraints on block and key
+	if (a_block.size() != 8) {
+		data_exception e("Blowfish block must be 8 bytes in length.");
+		throw (e);
+	}
+	if ((a_key.size() < 8) || (a_key.size() > 56)) {
+		data_exception e("Blowfish key must be between 8 and 56 bytes in length.");
+		throw (e);
+	}
+	data l_ret;
+	return l_ret;
 }
 
 };

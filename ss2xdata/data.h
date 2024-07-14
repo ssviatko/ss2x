@@ -15,6 +15,7 @@
 
 #include <cstdint>
 
+#include "bf.h"
 #include "md5.h"
 #include "sha1.h"
 #include "sha2.h"
@@ -94,6 +95,7 @@ public:
 	void random(std::size_t a_num_bytes);
 	void clear();
 	void truncate(std::size_t a_new_len);
+	void assign(std::uint8_t *a_buffer, std::size_t a_len);
 	
 	/* basic C/C++ inbuilt types */
 	
@@ -149,6 +151,8 @@ public:
 	
 	static data bf_key_random();
 	static data bf_key_schedule(const std::string& a_string);
+	static data bf_block_encrypt(data& a_block, data& a_key);
+	static data bf_block_decrypt(data& a_block, data& a_key);
 
 protected:
 	bool m_network_byte_order;

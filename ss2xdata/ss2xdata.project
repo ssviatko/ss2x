@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="ss2xdata" Version="11000" InternalType="">
   <VirtualDirectory Name="ss2xdata">
+    <File Name="bf.cc"/>
+    <File Name="bf.h"/>
     <File Name="vectors-2.txt"/>
     <File Name="md5.h"/>
     <File Name="md5.c"/>
