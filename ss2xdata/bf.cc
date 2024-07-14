@@ -4,7 +4,7 @@ namespace ss::bf {
 
 // block - constants
 
-const uint32_t block::ORIG_P[16 + 2] = {
+const std::uint32_t block::ORIG_P[16 + 2] = {
 0x243F6A88, 0x85A308D3, 0x13198A2E, 0x03707344,
 0xA4093822, 0x299F31D0, 0x082EFA98, 0xEC4E6C89,
 0x452821E6, 0x38D01377, 0xBE5466CF, 0x34E90C6C,
@@ -12,7 +12,7 @@ const uint32_t block::ORIG_P[16 + 2] = {
 0x9216D5D9, 0x8979FB1B
 };
 
-const uint32_t block::ORIG_S[4][256] = {
+const std::uint32_t block::ORIG_S[4][256] = {
 {
 0xD1310BA6, 0x98DFB5AC, 0x2FFD72DB, 0xD01ADFB7,
 0xB8E1AFED, 0x6A267E96, 0xBA7C9045, 0xF12C7F99,
@@ -282,13 +282,13 @@ std::uint32_t block::F(std::uint32_t x)
 	std::uint8_t a, b, c, d;
 	std::uint32_t y;
 	
-	d = (uint8_t)(x & 0x000000FF);
+	d = (std::uint8_t)(x & 0x000000FF);
 	x >>= 8;
-	c = (uint8_t)(x & 0x000000FF);
+	c = (std::uint8_t)(x & 0x000000FF);
 	x >>= 8;
-	b = (uint8_t)(x & 0x000000FF);
+	b = (std::uint8_t)(x & 0x000000FF);
 	x >>= 8;
-	a = (uint8_t)(x & 0x000000FF);
+	a = (std::uint8_t)(x & 0x000000FF);
 
 	y = S[0][a] + S[1][b];
 	y = y ^ S[2][c];
