@@ -21,6 +21,7 @@ data::data()
 : m_network_byte_order(false)
 , m_read_cursor(0)
 , m_write_cursor(0)
+, m_delimiter(0xa)
 {
 }
 
@@ -93,6 +94,42 @@ void data::load_file(const std::string& a_filename)
 	l_loadfile.close();
 }
 
+void data::write_std_str(const std::string& a_str)
+{
+	std::vector<std::uint8_t> l_pass;
+	l_pass.assign(a_str.c_str(), a_str.c_str() + a_str.size());
+	write_raw_data(l_pass);
+}
+
+std::string data::read_std_str(std::size_t a_length)
+{
+	std::vector<std::uint8_t> l_read = read_raw_data(a_length);
+	std::string l_ret((char *)(l_read.data()), l_read.size());
+	return l_ret;
+}
+
+void data::write_std_str_delim(const std::string& a_str)
+{
+	write_std_str(a_str);
+	write_uint8(m_delimiter);
+}
+
+std::optional<std::string> data::read_std_str_delim()
+{
+	std::vector<std::uint8_t>::iterator l_begin = m_buffer.begin();
+	std::advance(l_begin, m_read_cursor);
+	auto l_delim_pos = std::find(l_begin, m_buffer.end(), m_delimiter);
+	if (l_delim_pos == m_buffer.end()) {
+		return std::nullopt;
+	} else {
+		std::vector<std::uint8_t> l_work;
+		std::copy(l_begin, l_delim_pos, std::back_inserter(l_work));
+		std::string l_ret((char *)(l_work.data()), l_work.size());
+		m_read_cursor += l_work.size() + 1;
+		return l_ret;
+	}
+}
+
 std::vector<std::uint8_t> data::read_raw_data(std::size_t a_num_bytes)
 {
 	if (m_read_cursor + a_num_bytes > m_buffer.size()) {
@@ -133,11 +170,38 @@ void data::fill(std::size_t a_num_bytes, std::uint8_t a_val)
 	write_raw_data(l_pass);
 }
 
+void data::random(std::size_t a_num_bytes)
+{
+	std::vector<std::uint8_t> l_pass(a_num_bytes);
+	std::fill(l_pass.begin(), l_pass.end(), 0x00);
+	std::random_device l_rd;
+	std::mt19937 l_re(l_rd());
+	std::uniform_int_distribution<int> l_dist(0, 255);
+	for (auto& i : l_pass) {
+		i = l_dist(l_re);
+	}
+	write_raw_data(l_pass);
+}
+
 void data::clear()
 {
 	m_buffer.clear();
 	m_read_cursor = 0;
 	m_write_cursor = 0;
+}
+
+void data::truncate(std::size_t a_new_len)
+{
+	// do nothing if our truncation length is greater than the size of the buffer
+	if (a_new_len >= m_buffer.size())
+		return;
+		
+	m_buffer.resize(a_new_len);
+	// adjust cursors if necessary
+	if (m_write_cursor > a_new_len)
+		m_write_cursor = a_new_len;
+	if (m_read_cursor > a_new_len)
+		m_read_cursor = a_new_len;
 }
 
 void data::set_write_cursor(std::size_t a_write_cursor)
@@ -553,6 +617,25 @@ data data::sha2_512()
 	return l_digest;
 }
 
-};
+/* encryption */
 
+data data::bf_key_random()
+{
+	data l_ret;
+	
+	l_ret.random(56); // random 448 bit Blowfish key
+	return l_ret;
+}
+
+data data::bf_key_schedule(const std::string& a_string)
+{
+	// schedule a key by hashing a string
+	data l_work;
+	l_work.write_std_str(a_string);
+	data l_hash = l_work.sha2_512();
+	l_hash.truncate(56);
+	return l_hash;
+}
+
+};
 

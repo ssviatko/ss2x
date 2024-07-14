@@ -182,6 +182,42 @@ int main(int argc, char **argv)
 	ctx.log(std::format("read double: {}", g.read_double()));
 	ctx.log(std::format("read long double: {}", g.read_longdouble()));
 	
+	// test random fill feature
+	ss::data h;
+	for (int i = 0; i < 8; ++i) {
+		h.random(16);
+		ctx.log(std::format("random 16 bytes: {}", h.as_hex_str_nospace()));
+		h.clear();
+	}
+	
+	// test strings
+	ss::data str_test;
+	str_test.write_std_str("Now is time for all good men.");
+	ctx.log(std::format("write_std_str: {}", str_test.as_hex_str()));
+	ss::data str_test_delim;
+	str_test_delim.write_std_str_delim("Now is time for all good men.");
+	ctx.log(std::format("write_std_str_delim: {}", str_test_delim.as_hex_str()));
+	std::string l_read_str = str_test.read_std_str(9);
+	ctx.log(std::format("read_std_str(9): {} size={}", l_read_str, l_read_str.size()));
+	l_read_str = str_test.read_std_str(10);
+	ctx.log(std::format("read_std_str(10): {} size={}", l_read_str, l_read_str.size()));
+	str_test_delim.write_std_str_delim("That was the time then,");
+	str_test_delim.write_std_str_delim("This is the time now.");
+	str_test_delim.write_std_str("And now with no delimiter on the end");
+	for (int i = 0; i <= 3; ++i) {
+		l_read_str = str_test_delim.read_std_str_delim().value_or("no delimiter found");
+		ctx.log(std::format("read_std_str_delim: {} size={}", l_read_str, l_read_str.size()));
+	}
+	
+	// test encryption suite
+	
+	ss::data enc_randkey = ss::data::bf_key_random();
+	ctx.log(std::format("BF: random 448 bit key: {}", enc_randkey.as_hex_str_nospace()));
+	ss::data enc_schedule = ss::data::bf_key_schedule("Stephen Sviatko");
+	ctx.log(std::format("BF: scheduled key1: {}", enc_schedule.as_hex_str_nospace()));
+	ss::data enc_schedule2 = ss::data::bf_key_schedule("Stephen Sviatko");
+	ctx.log(std::format("BF: scheduled key2: {}", enc_schedule2.as_hex_str_nospace()));
+	
 	ctx.unregister_thread();
 		ctx.log("thread should be missing");
 	

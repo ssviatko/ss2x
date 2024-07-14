@@ -10,6 +10,8 @@
 #include <exception>
 #include <bit>
 #include <algorithm>
+#include <random>
+#include <optional>
 
 #include <cstdint>
 
@@ -89,7 +91,11 @@ public:
 	std::size_t size() { return m_buffer.size(); };
 
 	void fill(std::size_t a_num_bytes, std::uint8_t a_val);
+	void random(std::size_t a_num_bytes);
 	void clear();
+	void truncate(std::size_t a_new_len);
+	
+	/* basic C/C++ inbuilt types */
 	
 	void write_uint8(std::uint8_t a_uint8);
 	std::uint8_t read_uint8();
@@ -119,6 +125,18 @@ public:
 	void write_longdouble(long double a_longdouble);
 	long double read_longdouble();
 	
+	/* strings */
+	
+	void set_delimiter(std::uint8_t a_delimiter) { m_delimiter = a_delimiter; };
+	std::uint8_t get_delimiter() { return m_delimiter; };
+	
+	void write_std_str(const std::string& a_str);
+	std::string read_std_str(std::size_t a_length);
+	void write_std_str_delim(const std::string& a_str);
+	std::optional<std::string> read_std_str_delim();
+	
+	/* hashing */
+	
 	std::uint32_t crc32(std::uint32_t a_crc);
 	data md5();
 	data sha1();
@@ -126,12 +144,18 @@ public:
 	data sha2_256();
 	data sha2_384();
 	data sha2_512();
+	
+	/* encryption */
+	
+	static data bf_key_random();
+	static data bf_key_schedule(const std::string& a_string);
 
 protected:
 	bool m_network_byte_order;
 	std::size_t m_read_cursor;
 	std::size_t m_write_cursor;
 	std::vector<std::uint8_t> m_buffer;
+	std::uint8_t m_delimiter;
 };
 
 }; // namespace ss
