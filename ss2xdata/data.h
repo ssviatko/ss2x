@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <string>
 #include <sstream>
+#include <sstream>
 #include <fstream>
 #include <vector>
 #include <exception>
@@ -14,6 +15,9 @@
 #include <optional>
 
 #include <cstdint>
+
+#include <memory.h>
+#include <stdint.h>
 
 #include "bf.h"
 #include "md5.h"
@@ -70,6 +74,12 @@ class data {
 	std::vector<std::uint8_t> read_raw_data(std::size_t a_num_bytes);
 	void write_raw_data(std::vector<std::uint8_t>& a_vector);
 	
+	//static private utility methods for textual presentation and initialization
+	static std::string hex_str(const std::uint8_t *a_data, std::size_t a_len);
+	static std::uint8_t *hex_decode(const std::string a_str, std::size_t *decode_len);
+	static std::string base64_str(const std::uint8_t *a_data, std::size_t a_len);
+	static std::uint8_t *base64_decode(const std::string a_str, std::size_t *decode_len);
+
 public:
 	data();
 	~data();
@@ -142,6 +152,15 @@ public:
 	void write_std_str_delim(const std::string& a_str);
 	std::optional<std::string> read_std_str_delim();
 	
+	/* textual presentation and initialization */
+	
+	void write_hex_str(const std::string& a_str);
+	std::string read_hex_str(std::size_t a_len);
+	void write_base64(const std::string& a_str);
+	std::string read_base64(std::size_t a_len);
+	std::string as_base64();
+	void from_base64(const std::string& a_str);
+
 	/* hashing */
 	
 	std::uint32_t crc32(std::uint32_t a_crc);

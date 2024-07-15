@@ -307,6 +307,25 @@ int main(int argc, char **argv)
 		ctx.log(std::format("key {} clear {} enc {} check {}", l_key.as_hex_str_nospace(), l_clear.as_hex_str_nospace(), l_enc.as_hex_str_nospace(), l_check));
 	}
 	
+	// textual presentation test
+	ss::data tp1;
+	tp1.write_hex_str("9dbfdeadbeefc0edbabeffffff000001");
+	ctx.log(std::format("tp1 is: {}", tp1.as_hex_str_nospace()));
+	tp1.set_read_cursor(2);
+	ctx.log(std::format("snippet of tp1 is: {}", tp1.read_hex_str(9)));
+	tp1.set_read_cursor(0);
+	std::string l_tp1b64 = tp1.read_base64(tp1.size());
+	ctx.log(l_tp1b64);
+	tp1.set_write_cursor_to_append();
+	tp1.write_base64(l_tp1b64);
+	tp1.write_base64(l_tp1b64);
+	ctx.log(std::format("tp1 x3: {}", tp1.as_hex_str_nospace()));
+	std::string l_tp3 = tp1.as_base64();
+	ctx.log(l_tp3);
+	ss::data tp2;
+	tp2.from_base64(l_tp3);
+	ctx.log(std::format("tp2 x3: {}", tp2.as_hex_str_nospace()));
+	
 	ctx.unregister_thread();
 		ctx.log("thread should be missing");
 	

@@ -502,6 +502,190 @@ long double data::read_longdouble()
 	return l_ret.longdouble_val;
 }
 
+/* private routines for textual presentation and initialization */
+
+std::string data::hex_str(const std::uint8_t *a_data, std::size_t a_len)
+{
+	std::stringstream ss;
+
+	ss << std::hex;
+	for (std::size_t i = 0; i < a_len; ++i)
+		ss << std::setw(2) << std::setfill('0') << (int)a_data[i];
+	return ss.str();
+}
+
+std::uint8_t *data::hex_decode(const std::string a_str, std::size_t *decode_len)
+{
+	// bail out if we're not justified on a 2 character boundary
+	if ((a_str.size() % 2) != 0) {
+		data_exception e("hex_decode: String must be a multiple of 2 characters.");
+		throw(e);
+	}
+
+	std::size_t l_len = a_str.size() / 2;
+	*decode_len = l_len;
+//	std::cout << "hex_decode: l_len=" << l_len << " a_str.size=" << a_str.size() << std::endl;
+	std::uint8_t *l_dec = new std::uint8_t[l_len];
+
+	for (std::size_t i = 0; i < a_str.size(); i += 2) {
+		std::uint8_t l_in[2], l_out = 0;
+		l_in[0] = a_str[i];
+		l_in[1] = a_str[i + 1];
+		for (int j = 0; j < 2; ++j) {
+			if ((l_in[j] >= 'A') && (l_in[j] <= 'F'))
+				l_in[j] -= ('A' - 10);
+			else if ((l_in[j] >= 'a') && (l_in[j] <= 'f'))
+				l_in[j] -= ('a' - 10);
+			else if ((l_in[j] >= '0') && (l_in[j] <= '9'))
+				l_in[j] -= '0';
+			else {
+				// illegal char in string
+				delete[] l_dec;
+				data_exception e("hex_decode: Illegal character in string.");
+				throw(e);
+			}
+		}
+		l_out = ((l_in[0] & 0x0f) << 4);
+		l_out |= l_in[1] & 0x0f;
+		l_dec[i / 2] = l_out;
+	}
+
+	return l_dec;
+}
+
+std::string data::base64_str(const std::uint8_t *a_data, std::size_t a_len)
+{
+	std::stringstream ss;
+	std::uint8_t l_temp[3], l_out[5];
+	std::uint8_t l_chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+	for (std::size_t i = 0; i < a_len; i += 3) {
+		int l_numbytes = (i + 3 < a_len) ? 3 : a_len - i;
+//              std::cout << "l_numbytes=" << l_numbytes << std::endl;
+		memset(l_temp, 0, 3);
+		memcpy(l_temp, a_data + i, l_numbytes);
+		l_out[0] = l_chars[(l_temp[0] & 0xfc) >> 2];
+		l_out[1] = l_chars[((l_temp[0] & 0x03) << 4) | ((l_temp[1] & 0xf0) >> 4)];
+		l_out[2] = l_chars[((l_temp[1] & 0x0f) << 2) | ((l_temp[2] & 0xc0) >> 6)];
+		l_out[3] = l_chars[l_temp[2] & 0x3f];
+		l_out[4] = '\0';
+		if (l_numbytes < 3)
+			l_out[3] = '=';
+		if (l_numbytes == 1)
+			l_out[2] = '=';
+		ss << l_out;
+	}
+
+	return ss.str();
+}
+
+std::uint8_t *data::base64_decode(const std::string a_str, std::size_t *decode_len)
+{
+	// bail out if we're not justified on a 4 character boundary
+       if ((a_str.size() % 4) != 0) {
+		data_exception e("base64_decode: String must be a multiple of 4 characters.");
+		throw(e);
+	}
+
+	std::uint32_t l_len = (a_str.size() * 3 / 4);
+	*decode_len = l_len;
+//      std::cout << "base64_decode: l_len=" << l_len << " a_str.size=" << a_str.size() << std::endl;
+    std::uint8_t *l_dec = new std::uint8_t[l_len];
+
+	for (std::size_t i = 0, io = 0; i < a_str.size(); i += 4, io += 3) {
+		std::uint8_t l_in[4], l_out[3];
+		memset(l_out, 0, 3);
+		for (int j = 0; j < 4; ++j)
+			l_in[j] = a_str[i + j];
+		if (l_in[3] == '=') {
+			l_in[3] = 'A'; // zero it out
+			(*decode_len)--;
+		}
+		if (a_str[i + 2] == '=') {
+			l_in[2] = 'A';
+			(*decode_len)--;
+		}
+//              std::cout << "i=" << i << " decode_len=" << *decode_len << std::endl;
+		for (int j = 0; j < 4; ++j) {
+			if ((l_in[j] >= 'A') && (l_in[j] <= 'Z'))
+				l_in[j] -= 'A';
+			else if ((l_in[j] >= 'a') && (l_in[j] <= 'z'))
+				l_in[j] = l_in[j] - 'a' + 26;
+			else if ((l_in[j] >= '0') && (l_in[j] <= '9'))
+				l_in[j] = l_in[j] - '0' + 52;
+			else if (l_in[j] == '+')
+				l_in[j] = 62;
+			else if (l_in[j] == '/')
+				l_in[j] = 63;
+			else {
+				// illegal char in string
+				delete[] l_dec;
+				data_exception e("ss::data::base64_decode: Illegal character in string.");
+				throw(e);
+			}
+		}
+		l_out[0] = (l_in[0] << 2 | l_in[1] >> 4);
+		l_out[1] = (l_in[1] << 4 | l_in[2] >> 2);
+		l_out[2] = (((l_in[2] << 6) & 0xc0) | l_in[3]);
+		memcpy(l_dec + io, l_out, 3);
+	}
+
+	return l_dec;
+}
+
+// textual presentation and initialization
+
+void data::write_base64(const std::string& a_str)
+{
+	std::size_t l_decode_len;
+	std::uint8_t *l_buff = base64_decode(a_str, &l_decode_len);
+//	std::cout << "l_decode_len=" << l_decode_len << std::endl;
+	std::vector<std::uint8_t> l_pass;
+	l_pass.assign(l_buff, l_buff + l_decode_len);
+	write_raw_data(l_pass);
+	delete[] l_buff;
+}
+
+std::string data::read_base64(std::size_t a_len)
+{
+	std::vector<std::uint8_t> l_work = read_raw_data(a_len);
+	std::string ret = base64_str(l_work.data(), l_work.size());
+	return ret;
+}
+
+std::string data::as_base64()
+{
+	// return entire buffer as base64, without disturbing the cursors
+	std::string ret = base64_str(m_buffer.data(), m_buffer.size());
+	return ret;
+}
+
+void data::from_base64(const std::string& a_str)
+{
+	// clear the buffer and write entre contents from provided base64 string
+	clear();
+	write_base64(a_str);
+}
+
+void data::write_hex_str(const std::string& a_str)
+{
+	std::size_t l_decode_len;
+	std::uint8_t *l_buff = hex_decode(a_str, &l_decode_len);
+//	std::cout << "l_decode_len=" << l_decode_len << std::endl;
+	std::vector<std::uint8_t> l_pass;
+	l_pass.assign(l_buff, l_buff + l_decode_len);
+	write_raw_data(l_pass);
+	delete[] l_buff;
+}
+
+std::string data::read_hex_str(std::size_t a_len)
+{
+	std::vector<std::uint8_t> l_work = read_raw_data(a_len);
+	std::string ret = hex_str(l_work.data(), l_work.size());
+
+	return ret;
+}
+
 // hashing
 
 const std::uint32_t data::crc32_tab[] = {
