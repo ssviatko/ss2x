@@ -190,7 +190,7 @@ void data::clear()
 	m_write_cursor = 0;
 }
 
-void data::truncate(std::size_t a_new_len)
+void data::truncate_back(std::size_t a_new_len)
 {
 	// do nothing if our truncation length is greater than the size of the buffer
 	if (a_new_len >= m_buffer.size())
@@ -210,6 +210,29 @@ void data::assign(std::uint8_t *a_buffer, std::size_t a_len)
 		write_uint8(a_buffer[i]);
 	}
 }
+
+bool data::compare(const data& a_data) const
+{
+	// differ in size? return false
+	if (size() != a_data.size())
+		return false;
+		
+	return (m_buffer == a_data.m_buffer);
+}
+	
+/* operators */
+
+bool data::operator==(const data& rhs) const
+{
+	return compare(rhs);
+}
+
+bool data::operator!=(const data& rhs) const
+{
+	return !compare(rhs);
+}
+
+/* cursor management */
 
 void data::set_write_cursor(std::size_t a_write_cursor)
 {
@@ -640,7 +663,7 @@ data data::bf_key_schedule(const std::string& a_string)
 	data l_work;
 	l_work.write_std_str(a_string);
 	data l_hash = l_work.sha2_512();
-	l_hash.truncate(56);
+	l_hash.truncate_back(56);
 	return l_hash;
 }
 
@@ -675,7 +698,12 @@ data data::bf_block_decrypt(data& a_block, data& a_key)
 		data_exception e("Blowfish key must be between 8 and 56 bytes in length.");
 		throw (e);
 	}
+	ss::bf::block l_work(a_block.m_buffer.data(), a_key.m_buffer.data(), a_key.size());
+	l_work.decrypt();
 	data l_ret;
+	const std::uint8_t *blockdata = l_work.get_blockdata();
+	for (int i = 0; i < 8; ++i)
+		l_ret.write_uint8(blockdata[i]);
 	return l_ret;
 }
 

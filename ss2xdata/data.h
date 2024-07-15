@@ -89,13 +89,18 @@ public:
 	std::size_t get_write_cursor() { return m_write_cursor; };
 	std::size_t get_read_cursor() { return m_read_cursor; };
 	bool get_network_byte_order() { return m_network_byte_order; };
-	std::size_t size() { return m_buffer.size(); };
+	std::size_t size() const { return m_buffer.size(); };
 
 	void fill(std::size_t a_num_bytes, std::uint8_t a_val);
 	void random(std::size_t a_num_bytes);
 	void clear();
-	void truncate(std::size_t a_new_len);
+	void truncate_back(std::size_t a_new_len);
 	void assign(std::uint8_t *a_buffer, std::size_t a_len);
+	bool compare(const data& a_data) const; // true = same, false = different
+	
+	/* operators */
+	bool operator==(const data& rhs) const; // convenience wrappers for compare() function
+	bool operator!=(const data& rhs) const;
 	
 	/* basic C/C++ inbuilt types */
 	
