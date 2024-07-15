@@ -2,6 +2,8 @@
 
 namespace ss {
 
+/* data_exception */
+
 data_exception::data_exception(const char* a_what) throw()
 {
 	m_what = a_what;
@@ -16,6 +18,23 @@ const char* data_exception::what() const throw()
 {
 	return m_what.c_str();
 }
+
+/* bit cursor */
+
+void data::bit_cursor::set_absolute(std::uint64_t a_absolute)
+{
+	byte = a_absolute >> 3;
+	bit = 7 - (a_absolute & 0x7);
+}
+
+std::uint64_t data::bit_cursor::get_absolute()
+{
+	std::uint64_t l_ret = byte << 3;
+	l_ret |= (7 - bit);
+	return l_ret;
+}
+
+/* data */
 
 data::data()
 : m_network_byte_order(false)
@@ -188,6 +207,9 @@ void data::clear()
 	m_buffer.clear();
 	m_read_cursor = 0;
 	m_write_cursor = 0;
+	bit_cursor l_clear;
+	m_read_bit_cursor = l_clear;
+	m_write_bit_cursor = l_clear;
 }
 
 void data::truncate_back(std::size_t a_new_len)
@@ -202,6 +224,14 @@ void data::truncate_back(std::size_t a_new_len)
 		m_write_cursor = a_new_len;
 	if (m_read_cursor > a_new_len)
 		m_read_cursor = a_new_len;
+	if (m_write_bit_cursor.byte > a_new_len) {
+		m_write_bit_cursor.byte = a_new_len;
+		m_write_bit_cursor.bit = 7;
+	}
+	if (m_read_bit_cursor.byte > a_new_len) {
+		m_read_bit_cursor.byte = a_new_len;
+		m_read_bit_cursor.bit = 7;
+	}
 }
 
 void data::assign(std::uint8_t *a_buffer, std::size_t a_len)
@@ -230,6 +260,190 @@ bool data::operator==(const data& rhs) const
 bool data::operator!=(const data& rhs) const
 {
 	return !compare(rhs);
+}
+
+/* bits */
+
+void data::set_read_bit_cursor(bit_cursor a_bit_cursor)
+{
+	if (a_bit_cursor.byte < m_buffer.size()) {
+		m_read_bit_cursor = a_bit_cursor;
+	} else {
+		if ((a_bit_cursor.byte == m_buffer.size()) && (a_bit_cursor.bit == 7)) {
+			m_read_bit_cursor = a_bit_cursor;
+		} else {
+			data_exception e("attempt to set read bit cursor past end of buffer.");
+			throw (e);
+		}
+	}
+}
+
+void data::set_write_bit_cursor(bit_cursor a_bit_cursor)
+{
+	if (a_bit_cursor.byte < m_buffer.size()) {
+		m_write_bit_cursor = a_bit_cursor;
+	} else {
+		if ((a_bit_cursor.byte == m_buffer.size()) && (a_bit_cursor.bit == 7)) {
+			m_write_bit_cursor = a_bit_cursor;
+		} else {
+			data_exception e("attempt to set write bit cursor past end of buffer.");
+			throw (e);
+		}
+	}
+}
+
+void data::set_write_bit_cursor_to_append()
+{
+	bit_cursor l_temp;
+	l_temp.byte = m_buffer.size();
+	l_temp.bit = 7;
+	set_write_bit_cursor(l_temp);
+}
+
+void data::write_true()
+{
+	write_bit(true);
+}
+
+void data::write_false()
+{
+	write_bit(false);
+}
+
+const std::uint8_t data::byte_mask[] = { 0xfe, 0xfd, 0xfb, 0xf7, 0xef, 0xdf, 0xbf, 0x7f };
+
+void data::write_bit(bool a_bit)
+{
+	// make masks
+	std::uint8_t l_and = byte_mask[m_write_bit_cursor.bit];
+	std::uint8_t l_or = l_and ^ 0xff;
+
+	// if write position is more than one byte past the buffer size, panic!
+	// this should never, ever happen. This is protected against by the set_write_bit_cursor method above.
+	if (m_write_bit_cursor.byte >= m_buffer.size() + 1) {
+		data_exception e("write_bit: bit cursor set to impossible value.");
+		throw (e);
+	}
+	
+	// if write position is exactly one byte past the buffer size, add a byte to our buffer
+	if (m_write_bit_cursor.byte == m_buffer.size()) {
+		m_buffer.push_back(0x00);
+	}
+	
+	// write bit at cursor position
+	m_buffer[m_write_bit_cursor.byte] &= l_and;
+	if (a_bit)
+		m_buffer[m_write_bit_cursor.byte] |= l_or;
+
+	// advance the write cursor
+	if (m_write_bit_cursor.bit > 0) {
+		--m_write_bit_cursor.bit;
+	} else {
+		++m_write_bit_cursor.byte;
+		m_write_bit_cursor.bit = 7;
+	}
+}
+
+void data::write_bit(std::uint64_t a_bit)
+{
+	a_bit ? write_true() : write_false();
+}
+
+void data::write_bits(std::uint64_t a_bits, std::uint16_t a_count)
+{
+	// sanity check our bit count
+	if (!((a_count <= 64) && (a_count >= 0))) {
+		data_exception e("write_bits: Bit count must between 0-64.");
+		throw (e);
+	}
+
+	// shift everything over all the way to the left
+	a_bits <<= (64 - a_count);
+
+	// feed them into write_bit one at a time.
+	// Note: A logical improvement to this routine would involve shifting the bits over
+	// within a 5 byte frame to overlay the next bit write position, so the 3 inner bytes can be copied
+	// directly and the two outer bytes can be and/ored. This temporary solution may prove to be fast
+	// enough however.
+
+	while (a_count > 0) {
+		write_bit((a_bits & 0x8000000000000000ULL) > 0);
+		a_bits <<= 1;
+		--a_count;
+	}
+}
+
+bool data::read_bit()
+{
+	// if this read will push us past the end of the buffer, throw an exception
+	if (m_read_bit_cursor.byte >= m_buffer.size()) {
+		data_exception e("read_bit: Attempt cursor-mode read past end of buffer.");
+		throw(e);
+	}
+
+	std::uint8_t l_mask = byte_mask[m_read_bit_cursor.bit] ^ 0xff;
+	std::uint8_t l_byte = m_buffer[m_read_bit_cursor.byte] & l_mask;
+
+	// advance the read cursor
+	if (m_read_bit_cursor.bit > 0) {
+		--m_read_bit_cursor.bit;
+	} else {
+		++m_read_bit_cursor.byte;
+		m_read_bit_cursor.bit = 7;
+	}
+
+	return (l_byte > 0); // true, if the bit we requested is set
+}
+
+std::uint64_t data::read_bits(std::uint16_t a_count)
+{
+	// sanity check our bit count
+	if (!((a_count <= 64) && (a_count >= 0))) {
+		data_exception e("ss::data::read_bits: Bit count must between 0-64.");
+		throw (e);
+	}
+
+	std::uint64_t l_ret = 0;
+
+	while (a_count > 0) {
+		l_ret <<= 1;
+		if (read_bit())
+			l_ret |= 0x0000000000000001ULL;
+		--a_count;
+	}
+	return l_ret;
+}
+
+std::string data::as_bits()
+{
+	std::string l_ret;
+	
+	// does not disturb bit cursors
+	for (std::uint8_t& i : m_buffer) {
+		std::uint8_t l_work = i;
+		for (int j = 0; j <= 7; ++j) {
+			if (l_work & 0x80) {
+				l_ret += '1';
+			} else {
+				l_ret += '0';
+			}
+			l_work <<= 1;
+		}
+		l_ret += " "; // justify bytes
+	}
+	return l_ret;
+}
+
+void data::from_bits(const std::string& a_str)
+{
+	clear();
+	for (const auto& i : a_str) {
+		if (i == '0')
+			write_false();
+		if (i == '1')
+			write_true();
+		// ... and all other characters ignored. Feel free to use spaces or other delimiters.
+	}
 }
 
 /* cursor management */

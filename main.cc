@@ -326,6 +326,17 @@ int main(int argc, char **argv)
 	tp2.from_base64(l_tp3);
 	ctx.log(std::format("tp2 x3: {}", tp2.as_hex_str_nospace()));
 	
+	// bits etc
+	ss::data bit1;
+	std::string l_bit1_from = "11100011 10011001 00011101 11010011 11011";
+	bit1.from_bits(l_bit1_from);
+	std::string l_bit1 = bit1.as_bits();
+	ctx.log(std::format("bit1 from is {}", l_bit1_from));
+	ctx.log(std::format("bit1 as   is {}", l_bit1));
+	std::uint64_t l_bit1_read = bit1.read_bits(37);
+	ctx.log(std::format("bit1 read_bits(37) is: {:x}", l_bit1_read));
+	ctx.log(std::format("sanity check bit1: {} size={}", bit1.as_hex_str_nospace(), bit1.size()));
+	
 	ctx.unregister_thread();
 		ctx.log("thread should be missing");
 	

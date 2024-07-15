@@ -40,6 +40,7 @@ protected:
 class data {
 
 	const static std::uint32_t crc32_tab[];
+	const static std::uint8_t byte_mask[];
 
 	typedef union {
 		std::uint8_t uint8_val;
@@ -81,6 +82,18 @@ class data {
 	static std::uint8_t *base64_decode(const std::string a_str, std::size_t *decode_len);
 
 public:
+
+	class bit_cursor {
+	public:
+		bit_cursor() : byte(0), bit(7) { }
+		// bits start at bit 7 and count down to 0
+		std::uint64_t byte;
+		std::uint16_t bit;
+		void set_absolute(std::uint64_t a_absolute); // lower 64 bits of absolute bit position
+		void advance_to_next_whole_byte() { if (bit < 7) { ++byte; bit = 7; } }
+		std::uint64_t get_absolute();
+	};
+
 	data();
 	~data();
 	
@@ -109,9 +122,27 @@ public:
 	bool compare(const data& a_data) const; // true = same, false = different
 	
 	/* operators */
+	
 	bool operator==(const data& rhs) const; // convenience wrappers for compare() function
 	bool operator!=(const data& rhs) const;
 	
+	/* bits */
+	
+	void set_read_bit_cursor(bit_cursor a_bit_cursor);
+	void set_write_bit_cursor(bit_cursor a_bit_cursor);
+	void set_write_bit_cursor_to_append(); // write cursor at bit 7, m_buffer_datalen + 1
+	bit_cursor get_read_bit_cursor() const { return m_read_bit_cursor; }
+	bit_cursor get_write_bit_cursor() const { return m_write_bit_cursor; }
+	void write_true(); // write 1 bit at bit cursor, value 1 (true)
+	void write_false(); // write 1 bit at bit cursor, value 0 (false);
+	void write_bit(bool a_bit);
+	void write_bit(std::uint64_t a_bit); // integer version: 0=false, >0 = true, 
+	void write_bits(std::uint64_t a_bits, std::uint16_t a_count);
+	bool read_bit();
+	std::uint64_t read_bits(std::uint16_t a_count);
+	std::string as_bits();
+	void from_bits(const std::string& a_str);
+
 	/* basic C/C++ inbuilt types */
 	
 	void write_uint8(std::uint8_t a_uint8);
@@ -182,6 +213,8 @@ protected:
 	bool m_network_byte_order;
 	std::size_t m_read_cursor;
 	std::size_t m_write_cursor;
+	bit_cursor m_read_bit_cursor;
+	bit_cursor m_write_bit_cursor;
 	std::vector<std::uint8_t> m_buffer;
 	std::uint8_t m_delimiter;
 };
