@@ -340,6 +340,24 @@ int main(int argc, char **argv)
 	
 	// data compression
 	
+	// test one byte file
+	ss::data htzero;
+//	htzero.set_huffman_debug(true);
+	htzero.write_uint8(40);
+	ss::data htzero_comp = htzero.huffman_encode();
+	ctx.log(std::format("encoded 1 length file, len={}", htzero_comp.size()));
+	ss::data htzero_decomp = htzero_comp.huffman_decode();
+	ctx.log(std::format("decoded 1 length file, len={} check {}", htzero_decomp.size(), (htzero_decomp == htzero)));
+
+	// test repeated data edge case (single token)
+	ss::data htrep;
+//	htrep.set_huffman_debug(true);
+	htrep.fill(500, 0xff);
+	ss::data htrep_comp = htrep.huffman_encode();
+	ctx.log(std::format("encoded 500 length repeating character file, len={}", htrep_comp.size()));
+	ss::data htrep_decomp = htrep_comp.huffman_decode();
+	ctx.log(std::format("decoded 500 length repeating character file, len={} check {}", htrep_decomp.size(), (htrep_decomp == htrep)));
+
 	for (const auto& l_file : std::filesystem::recursive_directory_iterator(".")) {
 		if ((l_file.is_regular_file()) && (!(l_file.is_symlink()))) {
 			ss::data ht;

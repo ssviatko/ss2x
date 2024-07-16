@@ -1164,6 +1164,17 @@ data data::huffman_encode() const
 	std::uint64_t l_freq[256];
 	std::uint64_t l_max_freq = 0;
 
+	// check for zero length edge case
+	// just write a magic cookie with zero length
+	if (m_buffer.size() == 0) {
+		data l_encoded;
+		bit_cursor l_write_bit_cursor;
+		l_encoded.set_write_bit_cursor(l_write_bit_cursor);
+		l_encoded.write_bits(HUFF_MAGIC_COOKIE, 32);
+		l_encoded.write_bits(static_cast<std::uint64_t>(m_buffer.size()), 64);
+		return l_encoded;
+	}
+	
 	// populate frequency table
 	for (std::uint64_t i = 0; i < 256; ++i)
 		l_freq[i] = 0;
@@ -1226,17 +1237,39 @@ data data::huffman_encode() const
 		}
 	}
 
-	// there should be one node left in l_in, and this is our root node
+	// there should be one node left in l_in, and this is our root node.. unless it's a leaf, then cover that special case
 	huff_tree_node l_root = l_in.front();
 	l_in.pop_front();
 	l_root.id = l_next_id++;
-	l_out.push_back(l_root);
-	l_out_root = l_root.id;
-
-	if (m_huffman_debug) {
-		std::cout << "huffman_encode: Adding: Root:" << l_root.type << "-" << int(l_root.symbol) << "/" << l_root.freq;
-		std::cout << " IDs: L" << l_root.left_id << " A" << l_root.id << " R" << l_root.right_id << std::endl;
-		std::cout << "huffman_encode: Root node is " << l_out_root << std::endl;
+	// check if it's a leaf - this would indicate that it was the only node in the list
+	// this edge case happens when there is only one symbol type, e.g. a file full of zeros or a single byte file
+	// consequentially, give it an apex node and make that the root instead
+	if (l_root.type == huff_tree_node::LEAF) {
+		// l_apex becomes the root; l_root becomes the single child
+		huff_tree_node l_apex;
+		l_apex.type = huff_tree_node::INTERNAL;
+		l_apex.id = l_next_id++;
+		l_apex.freq = l_root.freq;
+		l_apex.left_id = l_root.id;
+		l_apex.right_id = -1;
+		l_out.push_back(l_root);
+		l_out.push_back(l_apex);
+		l_out_root = l_apex.id;
+		if (m_huffman_debug) {
+			std::cout << "huffman_encode: 1-node edge case - Adding: Root:" << l_apex.type;
+			std::cout << " IDs: L" << l_apex.left_id << " A" << l_apex.id << " R" << l_apex.right_id << std::endl;
+			std::cout << "huffman_encode: Root node is " << l_out_root << std::endl;
+			std::cout << "huffman_encode: single child node:" << l_root.type << "-" << int(l_root.symbol) << "/" << l_root.freq;
+			std::cout << " IDs: L" << l_root.left_id << " A" << l_root.id << " R" << l_root.right_id << std::endl;
+		}
+	} else {
+		l_out.push_back(l_root);
+		l_out_root = l_root.id;
+		if (m_huffman_debug) {
+			std::cout << "huffman_encode: Adding: Root:" << l_root.type << "-" << int(l_root.symbol) << "/" << l_root.freq;
+			std::cout << " IDs: L" << l_root.left_id << " A" << l_root.id << " R" << l_root.right_id << std::endl;
+			std::cout << "huffman_encode: Root node is " << l_out_root << std::endl;
+		}
 	}
 
 	// construct code table by traversing the tree
@@ -1251,7 +1284,7 @@ data data::huffman_encode() const
 	do {
 		// get our current node
 		huff_tree_node l_apex = l_out[l_cur_node];
-		if (m_huffman_debug) std::cout << "l_cur_node:" << l_cur_node << " l_traverse_up:" << std::boolalpha << l_traverse_up << std::noboolalpha << std::endl;
+		if (m_huffman_debug) std::cout << "huffman_encode: l_cur_node:" << l_cur_node << " l_traverse_up:" << std::boolalpha << l_traverse_up << std::noboolalpha << std::endl;
 		// did we arrive here from a child node?
 		if (l_traverse_up) {
 			l_traverse_up = false;
@@ -1262,6 +1295,11 @@ data data::huffman_encode() const
 			--l_cur_code_len;
 			if ((l_last == true) && (l_cur_node == l_out_root)) {
 				// we're at the root node and we arrived here from the right, so we're done!
+				l_finished = true;
+				continue;
+			}
+			// check our single leave edge case
+			if ((l_last == false) && (l_cur_node == l_out_root) && (l_apex.right_id == -1)) {
 				l_finished = true;
 				continue;
 			}
@@ -1276,6 +1314,7 @@ data data::huffman_encode() const
 					continue;
 				}
 			} else {
+				if (m_huffman_debug) std::cout << "arrived from the right" << std::endl;
 				// arrived from right, but we're not at the root, so traverse up yet again
 				l_cur_node = l_parent.top();
 				l_parent.pop();
@@ -1288,6 +1327,7 @@ data data::huffman_encode() const
 		if (l_apex.type == huff_tree_node::LEAF) {
 			if (m_huffman_debug) {
 				std::cout << "huffman_encode: Adding symbol:" << int(l_apex.symbol) << " code:";
+				std::cout << "  l_cur_code=" << l_cur_code << " l_cur_code_len=" << l_cur_code_len << "  ";
 				std::uint64_t l_temp = l_cur_code;
 				l_temp <<= (64 - l_cur_code_len);
 				for (std::int16_t i = 0; i < l_cur_code_len; ++i) {
@@ -1312,6 +1352,7 @@ data data::huffman_encode() const
 			++l_cur_code_len;
 			l_parent.push(l_cur_node);
 			l_cur_node = l_apex.left_id;
+			if (m_huffman_debug) std::cout << "huffman_encode: traversing down to the left to id:" << l_cur_node << std::endl;
 			continue;
 		}
 	} while (!l_finished);
@@ -1377,6 +1418,12 @@ data data::huffman_decode() const
 	}
 
 	std::uint64_t l_datalen = l_work.read_bits(64);
+	// if we read a 0 data length, just return an empty buffer
+	if (l_datalen == 0) {
+		data l_decoded;
+		return l_decoded;
+	}
+	
 	std::int16_t l_width = l_work.read_bits(6);
 
 	if (m_huffman_debug) std::cout << "huffman_decode: l_datalen=" << l_datalen << " l_width=" << l_width << std::endl;
@@ -1443,6 +1490,9 @@ data data::huffman_decode() const
 	}
 
 	// there should be one node left in l_in, and this is our root node
+	// Note that in the single token edge case, this singular node will be a LEAF.
+	// We can leave it a LEAF instead of breaking it out with a parent root node
+	// like we did in the huffman_encode method. The reason why is explained below.
 	huff_tree_node l_root = l_in.front();
 	l_in.pop_front();
 	l_root.id = l_next_id++;
@@ -1465,6 +1515,8 @@ data data::huffman_decode() const
 			huff_tree_node l_apex = l_out[l_cur];
 
 			// are we a leaf? if so, break out of the "do" loop
+			// Note that in the single token edge case, our root node will be a LEAF anyway,
+			// so this breaks out here and writes the single token below.
 			if (l_apex.type == huff_tree_node::LEAF) {
 				l_symbol = l_apex.symbol;
 				break;

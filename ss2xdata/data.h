@@ -132,6 +132,8 @@ public:
 	void save_file(const std::string& a_filename);
 	void load_file(const std::string& a_filename);
 
+	/* cursor management/settings */
+	
 	void set_write_cursor(std::size_t a_write_cursor);
 	void set_write_cursor_to_append();
 	void set_read_cursor(std::size_t a_read_cursor);
@@ -142,6 +144,8 @@ public:
 	bool get_network_byte_order() { return m_network_byte_order; };
 	std::size_t size() const { return m_buffer.size(); };
 
+	/* utilities */
+	
 	void fill(std::size_t a_num_bytes, std::uint8_t a_val);
 	void random(std::size_t a_num_bytes);
 	void clear();
