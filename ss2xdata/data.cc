@@ -41,11 +41,36 @@ data::data()
 , m_read_cursor(0)
 , m_write_cursor(0)
 , m_delimiter(0xa)
+, m_huffman_debug(false)
 {
 }
 
 data::~data()
 {
+}
+
+data::data(const data& a_data)
+{
+	copy_construct(a_data);
+}
+
+data::data(data&& a_data)
+{
+	copy_construct(a_data);
+	// clear foreign data object after we move it
+	a_data.clear();
+}
+
+void data::copy_construct(const data& a_data)
+{
+	m_network_byte_order = a_data.m_network_byte_order;
+	m_read_cursor = a_data.m_read_cursor;
+	m_write_cursor = a_data.m_write_cursor;
+	m_delimiter = a_data.m_delimiter;
+	m_huffman_debug = a_data.m_huffman_debug;
+	m_read_bit_cursor = a_data.m_read_bit_cursor;
+	m_write_bit_cursor = a_data.m_write_bit_cursor;
+	m_buffer = a_data.m_buffer;
 }
 
 void data::dump_hex()
@@ -260,6 +285,30 @@ bool data::operator==(const data& rhs) const
 bool data::operator!=(const data& rhs) const
 {
 	return !compare(rhs);
+}
+
+data& data::operator=(const data& a_data)
+{
+	if (this != &a_data) {
+		copy_construct(a_data);
+	} else {
+		data_exception e("data operator=: Self assignment detected.");
+		throw(e);
+	}
+	return *this;
+}
+
+data& data::operator=(data&& a_data)
+{
+	if (this != &a_data) {
+		copy_construct(a_data);
+		// since we're moving, clear the foreign data object
+		a_data.clear();
+	} else {
+		data_exception e("data operator=: Self assignment detected.");
+		throw(e);
+	}
+	return *this;
 }
 
 /* bits */
@@ -1104,6 +1153,339 @@ data data::bf_block_decrypt(data& a_block, data& a_key)
 		l_ret.write_uint8(blockdata[i]);
 	return l_ret;
 }
+
+/* compression */
+	
+data data::huffman_encode() const
+{
+	std::deque<huff_tree_node> l_in;
+	std::vector<huff_tree_node> l_out;
+	std::int16_t l_out_root = -1;
+	std::uint64_t l_freq[256];
+	std::uint64_t l_max_freq = 0;
+
+	// populate frequency table
+	for (std::uint64_t i = 0; i < 256; ++i)
+		l_freq[i] = 0;
+	for (std::size_t i = 0; i < m_buffer.size(); ++i)
+		++l_freq[m_buffer[i]];
+
+	// make a node for each symbol with >0 frequency
+	for (std::uint64_t i = 0; i < 256; ++i) {
+		if (l_freq[i] > 0) {
+			if (l_freq[i] > l_max_freq)
+				l_max_freq = l_freq[i];
+			if (m_huffman_debug) std::cout << "huffman_encode: creating huff_tree_node for " << std::hex << i << std::dec << " freq=" << l_freq[i] << std::endl;
+			huff_tree_node l_temp;
+			l_temp.symbol = i;
+			l_temp.freq = l_freq[i];
+			l_in.push_back(l_temp);
+		}
+	}
+	if (m_huffman_debug) std::cout << "huffman_encode: l_max_freq=" << l_max_freq << std::endl;
+
+	// arrange in ascending order of frequency
+	std::sort(l_in.begin(), l_in.end());
+
+	if (m_huffman_debug) {
+		for (std::deque<huff_tree_node>::iterator l_it = l_in.begin(); l_it != l_in.end(); ++l_it)
+			std::cout << "huffman_encode: sym:" << std::hex << int(l_it->symbol) << std::dec << " freq:" << l_it->freq << std::endl;
+	}
+	std::int16_t l_next_id = 0;
+
+	while (l_in.size() > 1) {
+		// create new internal node to point to each pulled node
+		huff_tree_node l_apex;
+		l_apex.type = huff_tree_node::INTERNAL;
+
+		// get the next 2 lowest frequency symbols and assign them id's
+		huff_tree_node l_left = l_in.front();
+		l_in.pop_front();
+		l_left.id = l_next_id++;
+		l_apex.left_id = l_left.id;
+		huff_tree_node l_right = l_in.front();
+		l_in.pop_front();
+		l_right.id = l_next_id++;
+		l_apex.right_id = l_right.id;
+
+		// assign apex sum of children's frequencies and add it back on the end of l_in
+		l_apex.freq = l_left.freq + l_right.freq;
+		l_in.push_back(l_apex);
+		std::sort(l_in.begin(), l_in.end());
+
+		// stick the children in our result vector
+		l_out.push_back(l_left);
+		l_out.push_back(l_right);
+
+		if (m_huffman_debug) {
+			std::cout << "huffman_encode: Adding: L:" << l_left.type << "-" << int(l_left.symbol) << "/" << l_left.freq;
+			std::cout << " IDs: L" << l_left.left_id << " A" << l_left.id << " R" << l_left.right_id;
+			std::cout << " R:" << l_right.type << "-" << int(l_right.symbol) << "/" << l_right.freq;
+			std::cout << " IDs: L" << l_right.left_id << " A" << l_right.id << " R" << l_right.right_id;
+			std::cout << std::endl;
+		}
+	}
+
+	// there should be one node left in l_in, and this is our root node
+	huff_tree_node l_root = l_in.front();
+	l_in.pop_front();
+	l_root.id = l_next_id++;
+	l_out.push_back(l_root);
+	l_out_root = l_root.id;
+
+	if (m_huffman_debug) {
+		std::cout << "huffman_encode: Adding: Root:" << l_root.type << "-" << int(l_root.symbol) << "/" << l_root.freq;
+		std::cout << " IDs: L" << l_root.left_id << " A" << l_root.id << " R" << l_root.right_id << std::endl;
+		std::cout << "huffman_encode: Root node is " << l_out_root << std::endl;
+	}
+
+	// construct code table by traversing the tree
+	std::map<std::uint8_t, std::pair<std::uint64_t, std::int16_t> > l_codes;
+	std::uint64_t l_cur_code = 0;
+	std::int16_t l_cur_code_len = 0;
+	std::int16_t l_cur_node = l_out_root;
+	std::stack<std::int16_t> l_parent;
+	bool l_finished = false;
+	bool l_traverse_up = false; // set when we are going backwards
+
+	do {
+		// get our current node
+		huff_tree_node l_apex = l_out[l_cur_node];
+		if (m_huffman_debug) std::cout << "l_cur_node:" << l_cur_node << " l_traverse_up:" << std::boolalpha << l_traverse_up << std::noboolalpha << std::endl;
+		// did we arrive here from a child node?
+		if (l_traverse_up) {
+			l_traverse_up = false;
+
+			// remove last bool from l_cur_code
+			bool l_last = l_cur_code & 0x1;
+			l_cur_code >>= 1;
+			--l_cur_code_len;
+			if ((l_last == true) && (l_cur_node == l_out_root)) {
+				// we're at the root node and we arrived here from the right, so we're done!
+				l_finished = true;
+				continue;
+			}
+			if (l_last == false) {
+				// we arrived here from the left, so categorize the right hand node now
+				if (l_apex.right_id > -1) {
+					l_cur_code <<= 1;
+					l_cur_code |= 0x1;
+					++l_cur_code_len;
+					l_parent.push(l_cur_node);
+					l_cur_node = l_apex.right_id;
+					continue;
+				}
+			} else {
+				// arrived from right, but we're not at the root, so traverse up yet again
+				l_cur_node = l_parent.top();
+				l_parent.pop();
+				l_traverse_up = true;
+				continue;
+			}
+		}
+
+		// if we're a leaf node, add our l_our_code vector to the l_codes map
+		if (l_apex.type == huff_tree_node::LEAF) {
+			if (m_huffman_debug) {
+				std::cout << "huffman_encode: Adding symbol:" << int(l_apex.symbol) << " code:";
+				std::uint64_t l_temp = l_cur_code;
+				l_temp <<= (64 - l_cur_code_len);
+				for (std::int16_t i = 0; i < l_cur_code_len; ++i) {
+					bool l_bit = ((l_temp & 0x8000000000000000ULL) > 0);
+					l_temp <<= 1;
+					std::cout << l_bit;
+				}
+				std::cout << std::endl;
+			}
+
+			l_codes.insert(std::pair<uint8_t, std::pair<uint64_t, int16_t> >(l_apex.symbol, std::pair<uint64_t, int16_t>(l_cur_code, l_cur_code_len)));
+			l_cur_node = l_parent.top();
+			l_parent.pop();
+			l_traverse_up = true;
+			continue;
+		}
+
+		// we traversed down to get here and we're not a leaf node, so go down and to the left
+		if (l_apex.left_id > -1) {
+			l_cur_code <<=1;
+			l_cur_code &= 0xfffffffffffffffeULL;
+			++l_cur_code_len;
+			l_parent.push(l_cur_node);
+			l_cur_node = l_apex.left_id;
+			continue;
+		}
+	} while (!l_finished);
+
+	// Write out frequency table, one token for every character 0-255, of the appropriate bit width of the largest frequency count in the table:
+	// 6-bit value indicating the bit width of each table item 0-64, then begin with value for char 0x00, 0x01, etc. up to 0xff..
+	// pad this list by advancing to the next whole byte, then:
+	// Write out m_buffer contents to another ss::data object, substiuting the bytes for the huffman codes in l_codes.
+
+	data l_encoded;
+	bit_cursor l_write_bit_cursor;
+	l_encoded.set_write_bit_cursor(l_write_bit_cursor);
+
+	// find the next greater power of 2 of l_max_freq.
+	// there is an easier way of doing this in c++23 using the <bit> library
+	// TODO: refactor this
+	if (m_huffman_debug) std::cout << "huffman_encode: l_max_freq=" << l_max_freq << std::endl;
+	std::int16_t l_maxbits = 64;
+	while ((l_max_freq & 0x8000000000000000ULL) == 0) {
+		l_max_freq <<= 1;
+		--l_maxbits;
+	}
+	if (m_huffman_debug) std::cout << "huffman_encode: frequency table width=" << l_maxbits << std::endl;
+
+	// magic cookie
+	l_encoded.write_bits(HUFF_MAGIC_COOKIE, 32);
+
+	// 64 bit data length
+	l_encoded.write_bits(static_cast<std::uint64_t>(m_buffer.size()), 64);
+
+	// frequency table symbol width
+	l_encoded.write_bits(l_maxbits, 6);
+
+	// frequency table
+	for (std::uint64_t i = 0; i < 256; ++i)
+		l_encoded.write_bits(l_freq[i], l_maxbits);
+
+	// advance write cursor to next whole byte
+	l_encoded.m_write_bit_cursor.advance_to_next_whole_byte();
+	if (m_huffman_debug) std::cout << "huffman_encode: codes start at: (l_encoded.m_write_bit_cursor.byte)=" << l_encoded.m_write_bit_cursor.byte << std::endl;
+
+	// write out huffman codes
+	for (std::size_t i = 0; i < m_buffer.size(); ++i) {
+		std::map<std::uint8_t, std::pair<std::uint64_t, std::int16_t> >::iterator l_it = l_codes.find(m_buffer[i]);
+		std::uint64_t l_bits = (l_it->second).first;
+		std::int16_t l_len = (l_it->second).second;
+		l_encoded.write_bits(l_bits, l_len);
+	}
+	return l_encoded;
+}
+
+data data::huffman_decode() const
+{
+	data l_work = *this; // copy ourselves so we can maintain constness
+	l_work.m_read_bit_cursor.set_absolute(0);
+
+	// verify magic cookie
+	std::uint32_t l_cookie = l_work.read_bits(32);
+	if (l_cookie != HUFF_MAGIC_COOKIE) {
+		// if our magic cookie is missing, don't even bother to decode the buffer
+		data_exception e("huffman_decode: Magic cookie missing from buffer.");
+		throw (e);
+	}
+
+	std::uint64_t l_datalen = l_work.read_bits(64);
+	std::int16_t l_width = l_work.read_bits(6);
+
+	if (m_huffman_debug) std::cout << "huffman_decode: l_datalen=" << l_datalen << " l_width=" << l_width << std::endl;
+
+	std::uint64_t l_freq[256];
+	for (std::uint64_t i = 0; i < 256; ++i)
+		l_freq[i] = l_work.read_bits(l_width);
+
+	std::deque<huff_tree_node> l_in;
+	std::vector<huff_tree_node> l_out;
+	std::int16_t l_out_root = -1;
+
+	// make a node for each symbol with >0 frequency
+	for (std::uint64_t i = 0; i < 256; ++i) {
+		if (l_freq[i] > 0) {
+			if (m_huffman_debug) std::cout << "huffman_decode: creating huff_tree_node for " << std::hex << i << std::dec << " freq=" << l_freq[i] << std::endl;
+			huff_tree_node l_temp;
+			l_temp.symbol = i;
+			l_temp.freq = l_freq[i];
+			l_in.push_back(l_temp);
+		}
+	}
+
+	// arrange in ascending order of frequency
+	std::sort(l_in.begin(), l_in.end());
+
+	if (m_huffman_debug) {
+		for (std::deque<huff_tree_node>::iterator l_it = l_in.begin(); l_it != l_in.end(); ++l_it)
+			std::cout << "huffman_decode: sym:" << std::hex << int(l_it->symbol) << std::dec << " freq:" << l_it->freq << std::endl;
+	}
+	std::int16_t l_next_id = 0;
+
+	while (l_in.size() > 1) {
+		// create new internal node to point to each pulled node
+		huff_tree_node l_apex;
+		l_apex.type = huff_tree_node::INTERNAL;
+
+		// get the next 2 lowest frequency symbols and assign them id's
+		huff_tree_node l_left = l_in.front();
+		l_in.pop_front();
+		l_left.id = l_next_id++;
+		l_apex.left_id = l_left.id;
+		huff_tree_node l_right = l_in.front();
+		l_in.pop_front();
+		l_right.id = l_next_id++;
+		l_apex.right_id = l_right.id;
+
+		// assign apex sum of children's frequencies and add it back on the end of l_in
+		l_apex.freq = l_left.freq + l_right.freq;
+		l_in.push_back(l_apex);
+		std::sort(l_in.begin(), l_in.end());
+
+		// stick the children in our result vector
+		l_out.push_back(l_left);
+		l_out.push_back(l_right);
+
+		if (m_huffman_debug) {
+			std::cout << "huffman_decode: Adding: L:" << l_left.type << "-" << int(l_left.symbol) << "/" << l_left.freq;
+			std::cout << " IDs: L" << l_left.left_id << " A" << l_left.id << " R" << l_left.right_id;
+			std::cout << " R:" << l_right.type << "-" << int(l_right.symbol) << "/" << l_right.freq;
+			std::cout << " IDs: L" << l_right.left_id << " A" << l_right.id << " R" << l_right.right_id;
+			std::cout << std::endl;
+		}
+	}
+
+	// there should be one node left in l_in, and this is our root node
+	huff_tree_node l_root = l_in.front();
+	l_in.pop_front();
+	l_root.id = l_next_id++;
+	l_out.push_back(l_root);
+	l_out_root = l_root.id;
+
+	// At this time, we should have a functional huffman tree constructed, so advance to the next whole byte
+	// and start collecting bits, traversing the huffman tree until we find the leaf node that corresponds
+	// to the symbol we're interested in.
+	data l_decoded;
+	l_decoded.m_write_bit_cursor.set_absolute(0);
+	l_work.m_read_bit_cursor.advance_to_next_whole_byte();
+	if (m_huffman_debug) std::cout << "huffman_decode: codes start at (m_read_bit_cursor.byte)=" << m_read_bit_cursor.byte << std::endl;
+
+	for (std::uint64_t i = 0; i < l_datalen; ++i) {
+		std::uint8_t l_symbol;
+		std::int16_t l_cur = l_out_root;
+		do {
+			// start right at the top
+			huff_tree_node l_apex = l_out[l_cur];
+
+			// are we a leaf? if so, break out of the "do" loop
+			if (l_apex.type == huff_tree_node::LEAF) {
+				l_symbol = l_apex.symbol;
+				break;
+			}
+
+			// we're on an INTERNAL node, so traverse downwards
+			bool l_bit = l_work.read_bit();
+			if (l_bit) {
+				// 1 bit, head right
+				l_cur = l_apex.right_id;
+				continue;
+			} else {
+				// 0 bit, head left
+				l_cur = l_apex.left_id;
+				continue;
+			}
+		} while (1);
+		l_decoded.write_uint8(l_symbol);
+	}
+	return l_decoded;
+}	
 
 };
 

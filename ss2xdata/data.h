@@ -8,6 +8,9 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
+#include <deque>
+#include <map>
+#include <stack>
 #include <exception>
 #include <bit>
 #include <algorithm>
@@ -80,6 +83,8 @@ class data {
 	static std::uint8_t *hex_decode(const std::string a_str, std::size_t *decode_len);
 	static std::string base64_str(const std::uint8_t *a_data, std::size_t a_len);
 	static std::uint8_t *base64_decode(const std::string a_str, std::size_t *decode_len);
+	
+	void copy_construct(const data& a_data);
 
 public:
 
@@ -94,12 +99,35 @@ public:
 		std::uint64_t get_absolute();
 	};
 
+	/* huffman related */
+
+	class huff_tree_node {
+	public:
+		enum { LEAF, INTERNAL };
+		huff_tree_node() : type(LEAF), id(0), symbol(0), freq(0), left_id(-1), right_id(-1) { }
+		std::int16_t type;
+		std::int16_t id;
+		std::uint8_t symbol;
+		std::uint64_t freq;
+		std::int16_t left_id;
+		std::int16_t right_id;
+		bool operator<(const huff_tree_node& rhs) const { return (freq < rhs.freq); }
+	};
+
+	const static uint32_t HUFF_MAGIC_COOKIE = 0xc0edbabe;
+
+	/* constructors */
+	
 	data();
+	data(const data& a_data);
+	data(data&& a_data);
 	~data();
 	
 	void dump_hex();
 	std::string as_hex_str();
 	std::string as_hex_str_nospace();
+
+	/* files */
 	
 	void save_file(const std::string& a_filename);
 	void load_file(const std::string& a_filename);
@@ -125,6 +153,8 @@ public:
 	
 	bool operator==(const data& rhs) const; // convenience wrappers for compare() function
 	bool operator!=(const data& rhs) const;
+	data& operator=(const data& a_data);
+	data& operator=(data&& a_data);
 	
 	/* bits */
 	
@@ -208,6 +238,12 @@ public:
 	static data bf_key_schedule(const std::string& a_string);
 	static data bf_block_encrypt(data& a_block, data& a_key);
 	static data bf_block_decrypt(data& a_block, data& a_key);
+	
+	/* compression */
+	
+	data huffman_encode() const;
+	data huffman_decode() const;
+	void set_huffman_debug(bool a_debug) { m_huffman_debug = a_debug; };
 
 protected:
 	bool m_network_byte_order;
@@ -217,6 +253,7 @@ protected:
 	bit_cursor m_write_bit_cursor;
 	std::vector<std::uint8_t> m_buffer;
 	std::uint8_t m_delimiter;
+	bool m_huffman_debug;
 };
 
 }; // namespace ss

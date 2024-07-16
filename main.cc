@@ -5,6 +5,7 @@
 #include <format>
 #include <thread>
 #include <array>
+#include <filesystem>
 
 #include "log.h"
 #include "icr.h"
@@ -336,6 +337,20 @@ int main(int argc, char **argv)
 	std::uint64_t l_bit1_read = bit1.read_bits(37);
 	ctx.log(std::format("bit1 read_bits(37) is: {:x}", l_bit1_read));
 	ctx.log(std::format("sanity check bit1: {} size={}", bit1.as_hex_str_nospace(), bit1.size()));
+	
+	// data compression
+	
+	for (const auto& l_file : std::filesystem::recursive_directory_iterator(".")) {
+		if ((l_file.is_regular_file()) && (!(l_file.is_symlink()))) {
+			ss::data ht;
+			ht.load_file(l_file.path());
+			//	ht.set_huffman_debug(true);
+			ss::data ht_comp = ht.huffman_encode();
+			//	ctx.log(ht_comp.as_hex_str());
+			ss::data ht_decomp = ht_comp.huffman_decode();
+			ctx.log(std::format("{} ht len: {} ht_comp len: {} ht_decomp len: {} check: {}", std::string(l_file.path()), ht.size(), ht_comp.size(), ht_decomp.size(), (ht_decomp == ht)));
+		}
+	}
 	
 	ctx.unregister_thread();
 		ctx.log("thread should be missing");
