@@ -1539,5 +1539,165 @@ data data::huffman_decode() const
 	return l_decoded;
 }	
 
+data data::rle_encode() const
+{
+	std::uint8_t RLE_ESCAPE = 0x55;
+	const std::uint8_t RLE_INCREMENT = 0x3B;
+
+	data l_in = *this;
+	data l_out;
+	
+	// if we're empty, nothing to do
+	if (l_in.size() == 0)
+		return l_out;
+
+	std::uint8_t l_new, l_old = 0, l_count = 0;
+	bool l_clear = true; // set this to indicate l_old is empty
+
+	// sliding window RLE
+	do {
+		l_new = l_in.read_uint8();
+
+		// did we encounter an escape? If so, flush the window then double it up, then rotate the escape
+		if (l_new == RLE_ESCAPE) {
+			if (!l_clear) {
+				if (l_count > 0) {
+					// if we've repeated fewer than 4 times, just write the bytes themselves
+					if (l_count < 3) {
+						for (std::uint64_t i = 0; i <= l_count; ++i)
+							l_out.write_uint8(l_old);
+						l_count = 0;
+					} else {
+						// write out compound set
+						l_out.write_uint8(RLE_ESCAPE);
+						l_out.write_uint8(l_old);
+						l_out.write_uint8(l_count + 1);
+						l_count = 0;
+					}
+				} else {
+					// weren't counting when we encountered escape, so just write out l_old
+					l_out.write_uint8(l_old);
+				}
+			}
+			l_out.write_uint8(RLE_ESCAPE);
+			l_out.write_uint8(RLE_ESCAPE);
+			RLE_ESCAPE += RLE_INCREMENT;
+			l_clear = true;
+			continue;
+		}
+
+		// first time through the loop (and after escapes), just stash away the first byte
+		if (l_clear) {
+			l_old = l_new;
+			l_clear = false;
+			continue;
+		}
+
+		if (l_old == l_new) {
+			++l_count;
+			if (l_count == 254) { // 254 repeats = 255 characters
+				// flush window and restart the count if we reached count limit
+				l_out.write_uint8(RLE_ESCAPE);
+				l_out.write_uint8(l_old);
+				l_out.write_uint8(l_count + 1);
+				l_count = 0;
+				l_clear = true;
+			}
+		} else {
+			if (l_count > 0) {
+				// if we've repeated fewer than 4 times, just write the bytes themselves
+				if (l_count < 3) {
+					for (std::uint64_t i = 0; i <= l_count; ++i)
+						l_out.write_uint8(l_old);
+					l_count = 0;
+				} else {
+					// write out compound set
+					l_out.write_uint8(RLE_ESCAPE);
+					l_out.write_uint8(l_old);
+					l_out.write_uint8(l_count + 1);
+					l_count = 0;
+				}
+			} else {
+				// got different byte, but no repeat, so write out old
+				l_out.write_uint8(l_old);
+			}
+			l_old = l_new;
+		}
+	} while (l_in.get_read_cursor() < l_in.size());
+
+	// flush window
+	if (!l_clear) {
+		if (l_count > 0) {
+			if (l_count < 3) {
+				for (std::uint64_t i = 0; i <= l_count; ++i)
+					l_out.write_uint8(l_old);
+				l_count = 0;
+			} else {
+				// write out compound set
+				l_out.write_uint8(RLE_ESCAPE);
+				l_out.write_uint8(l_old);
+				l_out.write_uint8(l_count + 1);
+				l_count = 0;
+			}
+		} else {
+			l_out.write_uint8(l_old);
+		}
+	}
+	return l_out;
+}
+
+data data::rle_decode() const
+{
+	std::uint8_t RLE_ESCAPE = 0x55;
+	const std::uint8_t RLE_INCREMENT = 0x3B;
+
+	data l_in = *this;
+	data l_out;
+
+	// if we're empty, nothing to do
+	if (l_in.size() == 0)
+		return l_out;
+
+	std::uint64_t l_repeat = 0;
+	enum { COLLECTING, FOUND_ESCAPE, FOUND_CHAR } l_state = COLLECTING;
+
+	do {
+		std::uint8_t l_new = l_in.read_uint8();
+		switch (l_state) {
+			case COLLECTING:
+				if (l_new == RLE_ESCAPE) {
+					l_state = FOUND_ESCAPE;
+				} else {
+					// just a normal char, so write it out
+					l_out.write_uint8(l_new);
+				}
+				break;
+			case FOUND_ESCAPE:
+				if (l_new == RLE_ESCAPE) {
+					// found second escape character, so write it then rotate escape
+					l_out.write_uint8(l_new);
+					RLE_ESCAPE += RLE_INCREMENT;
+					l_state = COLLECTING;
+				} else {
+					// something else, must be the char we need to repeat
+					l_repeat = l_new;
+					l_state = FOUND_CHAR;
+				}
+				break;
+			case FOUND_CHAR:
+				if (l_new > 0) {
+					l_out.fill(l_new, l_repeat);
+					l_state = COLLECTING;
+				} else {
+					// value of 0 is illegali in a repeat construct, so data stream must be corrupted
+					data_exception e("rle_decode: Illegal character in stream, possible data corruption.");
+					throw (e);
+				}
+				break;
+		}
+	} while (l_in.get_read_cursor() < l_in.size());
+	return l_out;
+}
+
 };
 

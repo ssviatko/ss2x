@@ -248,6 +248,8 @@ public:
 	data huffman_encode() const;
 	data huffman_decode() const;
 	void set_huffman_debug(bool a_debug) { m_huffman_debug = a_debug; };
+	data rle_encode() const;
+	data rle_decode() const;
 
 protected:
 	bool m_network_byte_order;

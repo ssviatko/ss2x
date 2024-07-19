@@ -366,7 +366,26 @@ int main(int argc, char **argv)
 			ss::data ht_comp = ht.huffman_encode();
 			//	ctx.log(ht_comp.as_hex_str());
 			ss::data ht_decomp = ht_comp.huffman_decode();
-			ctx.log(std::format("{} ht len: {} ht_comp len: {} ht_decomp len: {} check: {}", std::string(l_file.path()), ht.size(), ht_comp.size(), ht_decomp.size(), (ht_decomp == ht)));
+			ctx.log(std::format("{} ht len: {} ht_comp len: {} ht_decomp len: {} ratio: {:.5}% check: {}", std::string(l_file.path()), ht.size(), ht_comp.size(), ht_decomp.size(), ((float)ht_comp.size() / (float)ht.size()) * 100.0, (ht_decomp == ht)));
+		}
+	}
+	
+	// test RLE function
+	ss::data rle_man1;
+	rle_man1.write_hex_str("a1a2a3a4a5a5a5a5a5a5a5818283ffffffffffff0010");
+	ss::data rle_man1_enc = rle_man1.rle_encode();
+	ss::data rle_man1_dec = rle_man1_enc.rle_decode();
+	ctx.log(rle_man1.as_hex_str_nospace());
+	ctx.log(rle_man1_enc.as_hex_str_nospace());
+	ctx.log(rle_man1_dec.as_hex_str_nospace());
+	
+	for (const auto& l_file : std::filesystem::recursive_directory_iterator(".")) {
+		if ((l_file.is_regular_file()) && (!(l_file.is_symlink()))) {
+			ss::data rle;
+			rle.load_file(l_file.path());
+			ss::data rle_comp = rle.rle_encode();
+			ss::data rle_decomp = rle_comp.rle_decode();
+			ctx.log(std::format("{} rle len: {} rle_comp len: {} rle_decomp len: {} ratio: {:.5}% check: {}", std::string(l_file.path()), rle.size(), rle_comp.size(), rle_decomp.size(), ((float)rle_comp.size() / (float)rle.size()) * 100.0, (rle_decomp == rle)));
 		}
 	}
 	
