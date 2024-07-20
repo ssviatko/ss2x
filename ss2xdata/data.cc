@@ -42,6 +42,7 @@ data::data()
 , m_write_cursor(0)
 , m_delimiter(0xa)
 , m_huffman_debug(false)
+, m_lzw_debug(false)
 {
 }
 
@@ -68,6 +69,7 @@ void data::copy_construct(const data& a_data)
 	m_write_cursor = a_data.m_write_cursor;
 	m_delimiter = a_data.m_delimiter;
 	m_huffman_debug = a_data.m_huffman_debug;
+	m_lzw_debug = a_data.m_lzw_debug;
 	m_read_bit_cursor = a_data.m_read_bit_cursor;
 	m_write_bit_cursor = a_data.m_write_bit_cursor;
 	m_buffer = a_data.m_buffer;
@@ -191,7 +193,7 @@ std::vector<std::uint8_t> data::read_raw_data(std::size_t a_num_bytes)
 	return l_ret;
 }
 
-void data::write_raw_data(std::vector<std::uint8_t>& a_vector)
+void data::write_raw_data(const std::vector<std::uint8_t>& a_vector)
 {
 	// add space to vector if we're overwriting the end
 	if (m_write_cursor + a_vector.size() > m_buffer.size()) {
@@ -274,6 +276,11 @@ bool data::compare(const data& a_data) const
 		
 	return (m_buffer == a_data.m_buffer);
 }
+
+void data::append_data(const data& a_data)
+{
+	write_raw_data(a_data.m_buffer);
+}
 	
 /* operators */
 
@@ -309,6 +316,17 @@ data& data::operator=(data&& a_data)
 		throw(e);
 	}
 	return *this;
+}
+
+data& data::operator+=(const data& a_data)
+{
+	append_data(a_data);
+	return *this;
+}
+
+std::uint8_t& data::operator[](std::size_t index)
+{
+	return m_buffer.at(index);
 }
 
 /* bits */
@@ -1697,6 +1715,243 @@ data data::rle_decode() const
 		}
 	} while (l_in.get_read_cursor() < l_in.size());
 	return l_out;
+}
+
+data data::lzw_encode()
+{
+	data l_in = *this;
+	data l_out;
+
+	// if we're empty, nothing to do
+	if (l_in.size() == 0)
+		return l_out;
+	
+	data l_str;
+	std::uint8_t l_char;
+	
+	// clear dictionary
+	m_lzw_dictionary.clear();
+	m_lzw_next_token = LZW_TOKEN_FIRST;
+	m_current_width = 9;
+	
+	// STRING = get input character
+	l_str.write_uint8(l_in.read_uint8());
+	// WHILE there are input characters DO
+	while (l_in.get_read_cursor() < l_in.size()) {
+		// CHARACTER = get input character
+		l_char = l_in.read_uint8();
+		// if STRING+CHARACTER is in the dictionary then
+		data l_strchar;
+		l_strchar = l_str;
+		l_strchar.write_uint8(l_char);
+		bool l_found = lzw_string_in_dictionary(l_strchar);
+		if (l_found) {
+			// STRING = STRING + CHARACTER
+			l_str = l_strchar;
+		} else {
+			// output the code for STRING
+			std::uint16_t l_code = lzw_code_for_string(l_str);
+			l_out.write_bits(l_code, m_current_width);
+			if (m_lzw_debug) std::cout << std::format("lzw_encode: output code {:x} for STRING {}", l_code, l_str.as_hex_str_nospace()) << std::endl;
+			// add STRING+CHARACTER to dictionary
+			lzw_add_string(l_strchar);
+			m_lzw_next_token++;
+			// check here if we crossed a power of 2 boundary, so we can
+			// output a LZW_TOKEN_INCREASE token and increase the width.
+			if (std::has_single_bit(m_lzw_next_token)) { // integral power of 2?
+				l_out.write_bits(LZW_TOKEN_INCREASE, m_current_width);
+				m_current_width++;
+				if (m_lzw_debug) std::cout << "lzw_encode: insteasing bit width to " << m_current_width << std::endl;
+			}
+			// also, check here if we exceeded LZW_TOKEN_MAX so we can
+			// issue a LZW_TOKEN_RECYCLE and clean out the dictionary.
+			if (m_lzw_next_token > LZW_TOKEN_MAX) {
+//				data_exception e("lzw_encode: exceeded LZW_TOKEN_MAX");
+//				throw (e);
+				// STRING = CHARACTER
+				l_str.clear();
+				l_str.write_uint8(l_char);
+				// output code for STRING
+				std::uint16_t l_code = lzw_code_for_string(l_str);
+				l_out.write_bits(l_code, m_current_width);
+				if (m_lzw_debug) std::cout << std::format("lzw_encode: output code {:x} after recycle for STRING {}", l_code, l_str.as_hex_str_nospace()) << std::endl;
+				// write recycle token
+				l_out.write_bits(LZW_TOKEN_RECYCLE, m_current_width);
+				// completely reset our state
+				m_current_width = 9;
+				m_lzw_next_token = LZW_TOKEN_FIRST;
+				m_lzw_dictionary.clear();
+				l_str.clear();
+				// more work to do? or are we done?
+				if (l_in.get_read_cursor() >= l_in.size()) {
+					break;
+				}
+				// STRING = get input character
+				l_str.write_uint8(l_in.read_uint8());
+				continue;
+			}
+			
+			// STRING = CHARACTER
+			l_str.clear();
+			l_str.write_uint8(l_char);
+		}
+	}
+	// output code for STRING
+	std::uint16_t l_code = lzw_code_for_string(l_str);
+	l_out.write_bits(l_code, m_current_width);
+	if (m_lzw_debug) std::cout << std::format("lzw_encode: output code {:x} final for STRING {}", l_code, l_str.as_hex_str_nospace()) << std::endl;
+	l_out.write_bits(LZW_TOKEN_STOP, m_current_width);
+	
+	return l_out;
+}
+
+void data::lzw_add_string(data& a_string)
+{
+	m_lzw_dictionary[m_lzw_next_token] = a_string;
+	if (m_lzw_debug) std::cout << std::format("lzw_add_string: added token {:x} - {}", m_lzw_next_token, a_string.as_hex_str_nospace()) << std::endl;
+}
+
+bool data::lzw_string_in_dictionary(data& a_string)
+{
+	data l_string = a_string; // copy it so we don't disturb the original
+	
+	if (l_string.size() > 1) {
+		// find code in dictionary and output true if we found it
+		auto l_predicate = [&](const auto& l_map_pair) { return l_map_pair.second == l_string; };
+		auto l_result = std::find_if(m_lzw_dictionary.begin(), m_lzw_dictionary.end(), l_predicate);
+		return (l_result != m_lzw_dictionary.end());
+	} else if (l_string.size() == 1) {
+		// single character, always in the dictionary
+		return true;
+	} else {
+		// fatal error, string should not be empty
+		data_exception e("lzw_string_in_dictionary: empty STRING operator detected.");
+		throw (e);
+	}
+}
+
+bool data::lzw_code_in_dictionary(std::uint16_t a_code)
+{
+	if (a_code < 256)
+		return true; // all single characters are in dictionary
+	auto l_it = m_lzw_dictionary.find(a_code);
+	return (l_it != m_lzw_dictionary.end());
+}
+
+data data::lzw_string_for_code(std::uint16_t a_code)
+{
+	data l_ret;
+	if (a_code < 256) {
+		l_ret.write_uint8(a_code);
+	} else {
+		auto l_it = m_lzw_dictionary.find(a_code);
+		if (l_it == m_lzw_dictionary.end()) {
+			data_exception e(std::format("lzw_string_for_code: code {} not found in dictionary.", a_code));
+			throw (e);
+		} else {
+			l_ret = l_it->second;
+		}
+	}
+	return l_ret;
+}
+
+std::uint16_t data::lzw_code_for_string(data& a_string)
+{
+	std::uint16_t l_ret = 0;
+	data l_string = a_string; // copy it so we don't disturb the original
+	
+	if (l_string.size() > 1) {
+		// find code in dictionary and output it
+		auto l_predicate = [&](const auto& l_map_pair) { return l_map_pair.second == l_string; };
+		auto l_result = std::find_if(m_lzw_dictionary.begin(), m_lzw_dictionary.end(), l_predicate);
+		if (l_result == m_lzw_dictionary.end()) {
+			data_exception e("lzw_code_for_string: STRING not found in dictionary.");
+			throw (e);
+		} else {
+			l_ret = l_result->first;
+		}
+	} else if (l_string.size() == 1) {
+		// output single character
+		std::uint8_t l_val = l_string.read_uint8();
+		l_ret = l_val;
+	} else {
+		// fatal error, string should not be empty
+		data_exception e("lzw_code_for_string: empty STRING operator detected.");
+		throw (e);
+	}
+	return l_ret;
+}
+
+data data::lzw_decode()
+{
+	data l_in = *this;
+	data l_out;
+	data l_str;
+
+	// if we're empty, nothing to do
+	if (l_in.size() == 0)
+		return l_out;
+	
+	// clear dictionary
+	m_lzw_dictionary.clear();
+	m_lzw_next_token = LZW_TOKEN_FIRST;
+	m_current_width = 9;
+	
+	// read OLD_CODE
+	std::uint16_t l_old_code = l_in.read_bits(m_current_width);
+	if (m_lzw_debug) std::cout << "lzw_decode: read OLD code " << l_old_code << " (" << std::hex << (int)l_old_code << ")" << std::endl;
+	if (l_old_code == LZW_TOKEN_STOP)
+		return l_out;
+	// output OLD_CODE
+	l_out.write_uint8(l_old_code);
+	// CHARACTER = OLD_CODE
+	std::uint8_t l_char = l_old_code;
+	// while there are input codes DO
+	while (1) {
+		// read NEW CODE
+		std::uint16_t l_new_code = l_in.read_bits(m_current_width);
+		if (m_lzw_debug) std::cout << "lzw_decode: read NEW code " << l_new_code << " (" << std::hex << (int)l_new_code << ")" << std::endl;
+		if (l_new_code == LZW_TOKEN_STOP)
+			return l_out;
+		if (l_new_code == LZW_TOKEN_INCREASE) {
+			m_current_width++;
+			if (m_lzw_debug) std::cout << "lzw_decode: insteasing bit width to " << m_current_width << std::endl;
+			l_new_code = l_in.read_bits(m_current_width);
+		}
+		if (l_new_code == LZW_TOKEN_RECYCLE) {
+			// completely reset our state
+			m_current_width = 9;
+			m_lzw_next_token = LZW_TOKEN_FIRST;
+			m_lzw_dictionary.clear();
+			l_old_code = l_in.read_bits(m_current_width);
+			if (l_old_code == LZW_TOKEN_STOP)
+				return l_out;
+			l_out.write_uint8(l_old_code);
+			l_char = l_old_code;
+			continue;
+		}
+		// if NEW CODE is not in the dictionary, then...
+		if (!lzw_code_in_dictionary(l_new_code)) {
+			// STRING = get translation of OLD CODE
+			l_str = lzw_string_for_code(l_old_code);
+			// STRING = STRING + CHARACTER
+			l_str.write_uint8(l_char);
+		} else {
+			// STRING = get translation of NEW CODE
+			l_str = lzw_string_for_code(l_new_code);
+		}
+		// output STRING
+		l_out += l_str;
+		// CHARACTER = first character in STRING
+		l_char = l_str[0];
+		// add OLD CODE + CHARACTER to dictionary
+		data l_old_code_str = lzw_string_for_code(l_old_code);
+		l_old_code_str.write_uint8(l_char);
+		lzw_add_string(l_old_code_str);
+		m_lzw_next_token++;
+		// OLD CODE = NEW CODE
+		l_old_code = l_new_code;
+	}
 }
 
 };

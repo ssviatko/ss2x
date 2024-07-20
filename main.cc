@@ -77,7 +77,6 @@ int main(int argc, char **argv)
 {
 	std::cout << "ss2x framework test" << std::endl;
 	std::cout << "build no: " << BUILD_NUMBER << " release: " << RELEASE_NUMBER << " built on: " << BUILD_DATE << std::endl;
-
 	std::cout << "ss2xlog logging framework test" << std::endl;
 
 	ss::log::ctx& ctx = ss::log::ctx::get();
@@ -389,8 +388,50 @@ int main(int argc, char **argv)
 		}
 	}
 	
+	// LZW
+	ss::data lzw;
+	std::string lzw_vector = "/WED/WE/WEE/WEB/WET";
+	lzw.write_std_str(lzw_vector);
+	ctx.log(std::format("lzw test vector: {}", lzw_vector));
+//	lzw.set_lzw_debug(true);
+	ss::data lzw_comp = lzw.lzw_encode();
+	ctx.log(lzw_comp.as_hex_str_nospace());
+	ss::data lzw_decomp;
+//	lzw_comp.set_lzw_debug(true);
+	lzw_decomp = lzw_comp.lzw_decode();
+	ctx.log(lzw_decomp.as_hex_str_nospace());
+	std::string l_lzw_readback = lzw_decomp.read_std_str(lzw_decomp.size());
+	ctx.log(std::format("lzw readback: {} check: {}", l_lzw_readback, (lzw == lzw_decomp)));
+	
+	// test LZW bit width stepping feature
+	ss::data lzwstep;
+	std::string lzwstep_vector = "/WED/WE/WEE/WEB/WET/WEZ/WEZZ/ZEWWEZDEZWEZURURTUOLLOLOLLOUIRISOOOS/W/WZ/WWWABAAABABACADAEAAFAAGAAAAWEAWEPPEPPEPYUYIYYIYUYUYYUIUYTTTYTYTYYYTYYYYYYTRRERERRRRERRRFUFIFUUFIIFIUFIUIFUIUIIO";
+	lzwstep_vector += "8748744487374873888893993939993838373737737772929929992922922922992020020002202220222203033039939399933393307077077000700070110101101010100010010101212212211221121mnmnnmnnnmnnnmnnnmnnmmnnbnbnnbbnbn";
+	lzwstep_vector += "joeynjjoenjjoejoejjjoejoeynynyyynvccvvcvvccvccvccvvbxcccbxxxcvb";
+	lzwstep.write_std_str(lzwstep_vector);
+	ctx.log(std::format("lzwstep test vector: {}", lzwstep_vector));
+//	lzwstep.set_lzw_debug(true);
+	ss::data lzwstep_comp = lzwstep.lzw_encode();
+	ctx.log(lzwstep_comp.as_hex_str_nospace());
+	ss::data lzwstep_decomp;
+//	lzwstep_comp.set_lzw_debug(true);
+	lzwstep_decomp = lzwstep_comp.lzw_decode();
+	ctx.log(lzwstep_decomp.as_hex_str_nospace());
+	std::string l_lzwstep_readback = lzwstep_decomp.read_std_str(lzwstep_decomp.size());
+	ctx.log(std::format("lzwstep readback: {} check: {}", l_lzwstep_readback, (lzwstep == lzwstep_decomp)));
+
+	for (const auto& l_file : std::filesystem::recursive_directory_iterator("./.codelite/.")) {
+		if ((l_file.is_regular_file()) && (!(l_file.is_symlink()))) {
+			ss::data lzw;
+			lzw.load_file(l_file.path());
+			ss::data lzw_comp = lzw.lzw_encode();
+			ss::data lzw_decomp = lzw_comp.lzw_decode();
+			ctx.log(std::format("{} lzw len: {} lzw_comp len: {} lzw_decomp len: {} ratio: {:.5}% check: {}", std::string(l_file.path()), lzw.size(), lzw_comp.size(), lzw_decomp.size(), ((float)lzw_comp.size() / (float)lzw.size()) * 100.0, (lzw_decomp == lzw)));
+		}
+	}
+
 	ctx.unregister_thread();
-		ctx.log("thread should be missing");
+	ctx.log("thread should be missing");
 	
 	return 0;
 }

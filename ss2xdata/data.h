@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <format>
 #include <string>
 #include <sstream>
 #include <sstream>
@@ -76,7 +77,7 @@ class data {
 	} size16_union;
 
 	std::vector<std::uint8_t> read_raw_data(std::size_t a_num_bytes);
-	void write_raw_data(std::vector<std::uint8_t>& a_vector);
+	void write_raw_data(const std::vector<std::uint8_t>& a_vector);
 	
 	//static private utility methods for textual presentation and initialization
 	static std::string hex_str(const std::uint8_t *a_data, std::size_t a_len);
@@ -152,6 +153,7 @@ public:
 	void truncate_back(std::size_t a_new_len);
 	void assign(std::uint8_t *a_buffer, std::size_t a_len);
 	bool compare(const data& a_data) const; // true = same, false = different
+	void append_data(const data& a_data);
 	
 	/* operators */
 	
@@ -159,6 +161,8 @@ public:
 	bool operator!=(const data& rhs) const;
 	data& operator=(const data& a_data);
 	data& operator=(data&& a_data);
+	data& operator+=(const data& a_data);
+	std::uint8_t& operator[](std::size_t index);
 	
 	/* bits */
 	
@@ -250,6 +254,26 @@ public:
 	void set_huffman_debug(bool a_debug) { m_huffman_debug = a_debug; };
 	data rle_encode() const;
 	data rle_decode() const;
+	data lzw_encode();
+	data lzw_decode();
+	void set_lzw_debug(bool a_debug) { m_lzw_debug = a_debug; };
+	
+private:
+	// LZW related private constants and routines
+	const std::uint16_t LZW_TOKEN_STOP = 256; // stop data stream
+	const std::uint16_t LZW_TOKEN_INCREASE = 257; // increase bit width
+	const std::uint16_t LZW_TOKEN_RECYCLE = 258; // dictionary recycle
+	const std::uint16_t LZW_TOKEN_FIRST = 259; // first available token
+	const std::uint16_t LZW_TOKEN_MAX = 2045; // max token value
+	
+	std::uint16_t m_lzw_next_token;
+	std::uint16_t m_current_width;
+	std::uint16_t lzw_code_for_string(data& a_string);
+	data lzw_string_for_code(std::uint16_t a_code);
+	bool lzw_string_in_dictionary(data& a_string);
+	bool lzw_code_in_dictionary(std::uint16_t a_code);
+	void lzw_add_string(data& a_string);
+	std::map<std::uint16_t, data> m_lzw_dictionary;
 
 protected:
 	bool m_network_byte_order;
@@ -260,6 +284,7 @@ protected:
 	std::vector<std::uint8_t> m_buffer;
 	std::uint8_t m_delimiter;
 	bool m_huffman_debug;
+	bool m_lzw_debug;
 };
 
 }; // namespace ss
