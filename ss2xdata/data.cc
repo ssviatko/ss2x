@@ -1778,6 +1778,7 @@ data data::lzw_encode()
 				// write recycle token
 				l_out.write_bits(LZW_TOKEN_RECYCLE, m_current_width);
 				// completely reset our state
+				if (m_lzw_debug) std::cout << "lzw_encode: wrote RECYCLE token, resetting our state" << std::endl;
 				m_current_width = 9;
 				m_lzw_next_token = LZW_TOKEN_FIRST;
 				m_lzw_dictionary.clear();
@@ -1920,6 +1921,7 @@ data data::lzw_decode()
 		}
 		if (l_new_code == LZW_TOKEN_RECYCLE) {
 			// completely reset our state
+			if (m_lzw_debug) std::cout << "lzw_decode: RECYCLE, resetting our state" << std::endl;
 			m_current_width = 9;
 			m_lzw_next_token = LZW_TOKEN_FIRST;
 			m_lzw_dictionary.clear();
