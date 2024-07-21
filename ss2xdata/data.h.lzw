@@ -256,6 +256,30 @@ public:
 	data rle_encode() const;
 	data rle_decode() const;
 	
+	/* abandon LZW encoder. Sorry, it's too slow and uses too much memory.
+	 * furthermore, there are better (lower entropy) algorithms out there anyway. */
+//	data lzw_encode();
+//	data lzw_decode();
+//	void set_lzw_debug(bool a_debug) { m_lzw_debug = a_debug; };
+/*	
+private:
+	// LZW related private constants and routines
+	const std::uint16_t LZW_TOKEN_STOP = 256; // stop data stream
+	const std::uint16_t LZW_TOKEN_INCREASE = 257; // increase bit width
+	const std::uint16_t LZW_TOKEN_RECYCLE = 258; // dictionary recycle
+	const std::uint16_t LZW_TOKEN_FIRST = 259; // first available token
+	const std::uint16_t LZW_TOKEN_MAX = 2045; // max token value
+	
+	std::uint16_t m_lzw_next_token;
+	std::uint16_t m_current_width;
+	std::uint16_t lzw_code_for_string(data& a_string);
+	data lzw_string_for_code(std::uint16_t a_code);
+	bool lzw_string_in_dictionary(data& a_string);
+	bool lzw_code_in_dictionary(std::uint16_t a_code);
+	void lzw_add_string(data& a_string);
+	std::map<std::uint16_t, data> m_lzw_dictionary;
+	std::map<data, std::uint16_t> m_lzw_dictionary_reverse;
+*/
 protected:
 	bool m_network_byte_order;
 	std::size_t m_read_cursor;
@@ -265,6 +289,7 @@ protected:
 	std::vector<std::uint8_t> m_buffer;
 	std::uint8_t m_delimiter;
 	bool m_huffman_debug;
+	bool m_lzw_debug;
 };
 
 }; // namespace ss
