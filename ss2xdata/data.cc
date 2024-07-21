@@ -58,8 +58,8 @@ data::data(const data& a_data)
 data::data(data&& a_data)
 {
 	copy_construct(a_data);
-	// clear foreign data object after we move it
-	a_data.clear();
+//	// clear foreign data object after we move it
+//	a_data.clear();
 }
 
 void data::copy_construct(const data& a_data)
@@ -75,12 +75,12 @@ void data::copy_construct(const data& a_data)
 	m_buffer = a_data.m_buffer;
 }
 
-void data::dump_hex()
+void data::dump_hex() const
 {
 	std::cout << as_hex_str() << std::endl;
 }
 
-std::string data::as_hex_str()
+std::string data::as_hex_str() const
 {
 	std::stringstream l_ss;
 	for (const auto i : m_buffer) {
@@ -89,7 +89,7 @@ std::string data::as_hex_str()
 	return l_ss.str();
 }
 
-std::string data::as_hex_str_nospace()
+std::string data::as_hex_str_nospace() const
 {
 	std::stringstream l_ss;
 	for (const auto i : m_buffer) {
@@ -283,7 +283,20 @@ void data::append_data(const data& a_data)
 {
 	write_raw_data(a_data.m_buffer);
 }
-	
+
+std::size_t data::size() const
+{
+	std::int64_t l_size = m_buffer.size();
+	if (l_size < 0) {
+//		data_exception e("got <0 for buffer size");
+//		throw (e);
+//		std::cerr << "data::size got <0!" << std::endl;
+		return 0;
+	} else {
+		return l_size;
+	}
+}
+
 /* operators */
 
 bool data::operator==(const data& rhs) const
@@ -311,8 +324,8 @@ data& data::operator=(data&& a_data)
 {
 	if (this != &a_data) {
 		copy_construct(a_data);
-		// since we're moving, clear the foreign data object
-		a_data.clear();
+//		// since we're moving, clear the foreign data object
+//		a_data.clear();
 	} else {
 		data_exception e("data operator=: Self assignment detected.");
 		throw(e);
@@ -329,6 +342,34 @@ data& data::operator+=(const data& a_data)
 std::uint8_t& data::operator[](std::size_t index)
 {
 	return m_buffer.at(index);
+}
+
+bool data::operator<(const data& rhs) const
+{
+//	std::cout << "operator< this=" << this->size() << " rhs=" << rhs.size() << std::endl;
+	// comparison; iterate buffer(s) and return as soon as condition is met
+	// if both buffers are empty, they are equal, so return false
+	if ((this->size() == 0) && (rhs.size() == 0))
+		return false;
+	// if lhs contains data and rhs is empty, lhs is > rhs
+	if ((this->size() > 0) && (rhs.size() == 0))
+		return false;
+	// if lhs is empty and rhs contains data, then lhs < rhs
+	if ((this->size() == 0) && (rhs.size() > 0))
+		return true;
+	// both buffers contain data, compare them byte by byte. if they are stil
+	// equal after comparing the smaller number of bytes, then the larger object
+	// wins as the greater value.
+	std::size_t l_min = std::min(this->size(), rhs.size());
+	for (std::size_t i = 0; i < l_min; ++i) {
+		if (this->m_buffer[i] < rhs.m_buffer[i])
+			return true;
+	}
+	if (this->size() < rhs.size())
+		return true;
+	// fall through here. buffers are identical in size, or lhs is bigger.
+	// either way, return false.
+	return false;
 }
 
 /* bits */
@@ -1737,6 +1778,7 @@ data data::lzw_encode()
 	
 	// clear dictionary
 	m_lzw_dictionary.clear();
+	m_lzw_dictionary_reverse.clear();
 	m_lzw_next_token = LZW_TOKEN_FIRST;
 	m_current_width = 9;
 	
@@ -1788,6 +1830,7 @@ data data::lzw_encode()
 				m_current_width = 9;
 				m_lzw_next_token = LZW_TOKEN_FIRST;
 				m_lzw_dictionary.clear();
+				m_lzw_dictionary_reverse.clear();
 				l_str.clear();
 				// more work to do? or are we done?
 				if (l_in.get_read_cursor() >= l_in.size()) {
@@ -1815,6 +1858,7 @@ data data::lzw_encode()
 void data::lzw_add_string(data& a_string)
 {
 	m_lzw_dictionary[m_lzw_next_token] = a_string;
+//	m_lzw_dictionary_reverse[a_string] = m_lzw_next_token;
 	if (m_lzw_debug) std::cout << std::format("lzw_add_string: added token {:x} - {}", m_lzw_next_token, a_string.as_hex_str_nospace()) << std::endl;
 }
 
@@ -1827,6 +1871,8 @@ bool data::lzw_string_in_dictionary(data& a_string)
 		auto l_predicate = [&](const auto& l_map_pair) { return l_map_pair.second == l_string; };
 		auto l_result = std::find_if(m_lzw_dictionary.begin(), m_lzw_dictionary.end(), l_predicate);
 		return (l_result != m_lzw_dictionary.end());
+//		auto l_it = m_lzw_dictionary_reverse.find(a_string);
+//		return (l_it != m_lzw_dictionary_reverse.end());
 	} else if (l_string.size() == 1) {
 		// single character, always in the dictionary
 		return true;
@@ -1901,6 +1947,7 @@ data data::lzw_decode()
 	
 	// clear dictionary
 	m_lzw_dictionary.clear();
+	m_lzw_dictionary_reverse.clear();
 	m_lzw_next_token = LZW_TOKEN_FIRST;
 	m_current_width = 9;
 	
@@ -1931,6 +1978,7 @@ data data::lzw_decode()
 			m_current_width = 9;
 			m_lzw_next_token = LZW_TOKEN_FIRST;
 			m_lzw_dictionary.clear();
+			m_lzw_dictionary_reverse.clear();
 			l_old_code = l_in.read_bits(m_current_width);
 			if (l_old_code == LZW_TOKEN_STOP)
 				return l_out;

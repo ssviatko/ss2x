@@ -124,9 +124,9 @@ public:
 	data(data&& a_data);
 	~data();
 	
-	void dump_hex();
-	std::string as_hex_str();
-	std::string as_hex_str_nospace();
+	void dump_hex() const;
+	std::string as_hex_str() const;
+	std::string as_hex_str_nospace() const;
 
 	/* files */
 	
@@ -143,7 +143,7 @@ public:
 	std::size_t get_write_cursor() { return m_write_cursor; };
 	std::size_t get_read_cursor() { return m_read_cursor; };
 	bool get_network_byte_order() { return m_network_byte_order; };
-	std::size_t size() const { return m_buffer.size(); };
+	std::size_t size() const;
 
 	/* utilities */
 	
@@ -163,7 +163,11 @@ public:
 	data& operator=(data&& a_data);
 	data& operator+=(const data& a_data);
 	std::uint8_t& operator[](std::size_t index);
-	
+	bool operator<(const data& rhs) const;
+	bool operator>(const data& rhs) { return rhs < *this; }
+	bool operator<=(const data& rhs) { return !(*this > rhs); }
+	bool operator>=(const data& rhs) { return !(*this < rhs); }	
+
 	/* bits */
 	
 	void set_read_bit_cursor(bit_cursor a_bit_cursor);
@@ -274,6 +278,7 @@ private:
 	bool lzw_code_in_dictionary(std::uint16_t a_code);
 	void lzw_add_string(data& a_string);
 	std::map<std::uint16_t, data> m_lzw_dictionary;
+	std::map<data, std::uint16_t> m_lzw_dictionary_reverse;
 
 protected:
 	bool m_network_byte_order;
