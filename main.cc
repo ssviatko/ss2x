@@ -387,6 +387,7 @@ int main(int argc, char **argv)
 		}
 	}
 	
+	/*
 	// LZW
 	ss::data lzw;
 	std::string lzw_vector = "/WED/WE/WEE/WEB/WET";
@@ -419,7 +420,7 @@ int main(int argc, char **argv)
 	std::string l_lzwstep_readback = lzwstep_decomp.read_std_str(lzwstep_decomp.size());
 	ctx.log(std::format("lzwstep readback: {} check: {}", l_lzwstep_readback, (lzwstep == lzwstep_decomp)));
 
-	for (const auto& l_file : std::filesystem::recursive_directory_iterator("./.codelite/.")) {
+	for (const auto& l_file : std::filesystem::recursive_directory_iterator(".")) {
 		if ((l_file.is_regular_file()) && (!(l_file.is_symlink()))) {
 			ss::data lzw;
 			lzw.load_file(l_file.path());
@@ -428,7 +429,7 @@ int main(int argc, char **argv)
 			ctx.log(std::format("{} lzw len: {} lzw_comp len: {} lzw_decomp len: {} ratio: {:.5}% check: {}", std::string(l_file.path()), lzw.size(), lzw_comp.size(), lzw_decomp.size(), ((float)lzw_comp.size() / (float)lzw.size()) * 100.0, (lzw_decomp == lzw)));
 		}
 	}
-
+*/
 	ctx.unregister_thread();
 	ctx.log("thread should be missing");
 	

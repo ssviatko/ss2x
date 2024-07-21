@@ -1764,6 +1764,8 @@ data data::rle_decode() const
 	return l_out;
 }
 
+/* abandoned LZW encoder. Worked before abandonment but was slow and used way too much memory.
+
 data data::lzw_encode()
 {
 	data l_in = *this;
@@ -2009,6 +2011,7 @@ data data::lzw_decode()
 		l_old_code = l_new_code;
 	}
 }
+*/
 
 };
 

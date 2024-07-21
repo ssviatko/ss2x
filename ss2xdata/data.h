@@ -258,10 +258,13 @@ public:
 	void set_huffman_debug(bool a_debug) { m_huffman_debug = a_debug; };
 	data rle_encode() const;
 	data rle_decode() const;
-	data lzw_encode();
-	data lzw_decode();
-	void set_lzw_debug(bool a_debug) { m_lzw_debug = a_debug; };
 	
+	/* abandon LZW encoder. Sorry, it's too slow and uses too much memory.
+	 * furthermore, there are better (lower entropy) algorithms out there anyway. */
+//	data lzw_encode();
+//	data lzw_decode();
+//	void set_lzw_debug(bool a_debug) { m_lzw_debug = a_debug; };
+/*	
 private:
 	// LZW related private constants and routines
 	const std::uint16_t LZW_TOKEN_STOP = 256; // stop data stream
@@ -279,7 +282,7 @@ private:
 	void lzw_add_string(data& a_string);
 	std::map<std::uint16_t, data> m_lzw_dictionary;
 	std::map<data, std::uint16_t> m_lzw_dictionary_reverse;
-
+*/
 protected:
 	bool m_network_byte_order;
 	std::size_t m_read_cursor;
