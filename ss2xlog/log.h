@@ -44,7 +44,7 @@ enum prio_t {
 	DEBUG // Debug
 };
 
-std::unordered_map<std::string, std::string> color_tokens = {
+const std::unordered_map<std::string, std::string> color_tokens = {
 	{ "%%COLORBLACK%%", COLOR_BLACK },
 	{ "%%COLORRED%%", COLOR_RED },
 	{ "%%COLORGREEN%%", COLOR_GREEN },

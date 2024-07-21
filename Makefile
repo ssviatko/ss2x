@@ -9,7 +9,7 @@ UNAME = $(shell uname)
 CC = gcc
 CPP = g++
 LD = g++
-LDFLAGS = -Wl,-rpath,. -Wl,-rpath=/usr/local/lib64 -L. -lss2xlog -lss2xicr -lss2xdata -lpthread 
+LDFLAGS = -Wl,-rpath,. -Wl,-rpath=/usr/local/lib64 -L. -lpthread -lss2xlog -lss2xicr -lss2xdata
 TARGET = ss2x
 OBJS = main.o
 

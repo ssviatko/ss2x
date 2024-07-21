@@ -141,7 +141,6 @@ int main(int argc, char **argv)
 			ctx.log(std::format("key {} is {}", j, icr.keyvalue(i, j)));
 		}
 	}
-	
 	// test ss::data
 	ss::data a;
 	a.set_network_byte_order(true);

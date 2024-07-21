@@ -83,16 +83,18 @@ void data::dump_hex()
 std::string data::as_hex_str()
 {
 	std::stringstream l_ss;
-	for (auto& i : m_buffer)
+	for (const auto i : m_buffer) {
 		l_ss << std::hex << std::setfill('0') << std::setw(2) << (int)i << " ";
+	}
 	return l_ss.str();
 }
 
 std::string data::as_hex_str_nospace()
 {
 	std::stringstream l_ss;
-	for (auto& i : m_buffer)
+	for (const auto i : m_buffer) {
 		l_ss << std::hex << std::setfill('0') << std::setw(2) << (int)i;
+	}
 	return l_ss.str();
 }
 
@@ -771,6 +773,10 @@ void data::write_longdouble(long double a_longdouble)
 	std::vector<std::uint8_t> l_pass;
 	size16_union l_work;
 	l_work.longdouble_val = a_longdouble;
+	// zero out bytes 10-15 of the long double (not used anyway)
+	// to shut up Valgrind's uninitialized value error
+	for (std::size_t i = 10; i < 16; ++i)
+		l_work.raw[i] = 0;
 	l_pass.assign(l_work.raw, l_work.raw + 16);
 	write_raw_data(l_pass);
 }
