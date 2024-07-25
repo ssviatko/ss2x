@@ -443,6 +443,52 @@ int main(int argc, char **argv)
 	ctx.unregister_thread();
 	ctx.log("thread should be missing");
 	
+	// test specialized integer lengths
+	
+	ss::data spec1;
+	spec1.set_network_byte_order(true);
+	spec1.write_uint24(0x9dbf46);
+	spec1.write_uint24(0xff427b);
+	ctx.log(std::format("spec1 is {}", spec1.as_hex_str_nospace()));
+	std::uint32_t l_spec1_1 = spec1.read_uint24();
+	std::uint32_t l_spec1_2 = spec1.read_uint24();
+	ctx.log(std::format("read back {:x} and {:x}", l_spec1_1, l_spec1_2));
+	ss::data spec2;
+	spec2.set_network_byte_order(true);
+	spec2.write_int24(0x448899);
+	spec2.write_int24(-7654321);
+	ctx.log(std::format("spec2 is {}", spec2.as_hex_str_nospace()));
+	std::int32_t l_spec2_1 = spec2.read_int24();
+	std::int32_t l_spec2_2 = spec2.read_int24();
+	ctx.log(std::format("read back {:x} and {:x}", l_spec2_1, l_spec2_2));
+	ctx.log(std::format("decimal read back {} and {}", l_spec2_1, l_spec2_2));
+	ss::data spec3;
+//	spec3.set_network_byte_order(true);
+	spec3.write_uint40(0x9988776655);
+	spec3.write_uint40(50000000);
+	spec3.write_int40(0x4488aadd99);
+	spec3.write_int40(-76543212538);
+	ctx.log(std::format("spec3 is {}", spec3.as_hex_str_nospace()));
+	std::uint64_t l_spec3_1 = spec3.read_uint40();
+	std::uint64_t l_spec3_2 = spec3.read_uint40();
+	std::int64_t l_spec3_3 = spec3.read_int40();
+	std::int64_t l_spec3_4 = spec3.read_int40();
+	ctx.log(std::format("read back {:x} {:x} {:x} {:x}", l_spec3_1, l_spec3_2, l_spec3_3, l_spec3_4));
+	ctx.log(std::format("decimal read back {} {} {} {}", l_spec3_1, l_spec3_2, l_spec3_3, l_spec3_4));
+	ss::data spec4;
+	spec4.set_network_byte_order(true);
+	spec4.write_uint48(0x9988776655);
+	spec4.write_uint48(50000000);
+	spec4.write_int48(0x4488aadd99);
+	spec4.write_int48(-76543212538);
+	ctx.log(std::format("spec4 is {}", spec4.as_hex_str_nospace()));
+	std::uint64_t l_spec4_1 = spec4.read_uint48();
+	std::uint64_t l_spec4_2 = spec4.read_uint48();
+	std::int64_t l_spec4_3 = spec4.read_int48();
+	std::int64_t l_spec4_4 = spec4.read_int48();
+	ctx.log(std::format("read back {:x} {:x} {:x} {:x}", l_spec4_1, l_spec4_2, l_spec4_3, l_spec4_4));
+	ctx.log(std::format("decimal read back {} {} {} {}", l_spec4_1, l_spec4_2, l_spec4_3, l_spec4_4));
+	
 	return 0;
 }
 

@@ -763,6 +763,286 @@ std::int64_t data::read_int64()
 	return l_ret.int64_val;
 }
 
+// specializations
+
+void data::write_uint24(std::uint32_t a_uint32)
+{
+	std::vector<std::uint8_t> l_pass;
+	size4_union l_work;
+	l_work.uint32_val = a_uint32;
+	if (l_work.uint32_val > 16777215) {
+		data_exception e("uint24 value should not exceed 16777215.");
+		throw (e);
+	}
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_work.uint32_val = std::byteswap(l_work.uint32_val);
+	}
+	if ((std::endian::native == std::endian::big) || m_network_byte_order) {
+		l_pass.assign(l_work.raw + 1, l_work.raw + 4);
+	} else {
+		l_pass.assign(l_work.raw, l_work.raw + 3);
+	}
+	write_raw_data(l_pass);	
+}
+
+std::uint32_t data::read_uint24()
+{
+	std::vector<std::uint8_t> l_read = read_raw_data(3);
+	size4_union l_ret;
+	l_ret.uint32_val = 0;
+	if (m_network_byte_order) {
+		l_read.insert(l_read.begin(), 0x00);
+	} else {
+		l_read.push_back(0x00);
+	}
+	std::copy(l_read.begin(), l_read.end(), l_ret.raw);
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_ret.uint32_val = std::byteswap(l_ret.uint32_val);
+	}
+	return l_ret.uint32_val;	
+}
+
+void data::write_int24(std::int32_t a_int32)
+{
+	std::vector<std::uint8_t> l_pass;
+	size4_union l_work;
+	l_work.int32_val = a_int32;
+	if (l_work.int32_val > 8388607) {
+		data_exception e("uint24 value should not exceed 8388607.");
+		throw (e);
+	}
+	if (l_work.int32_val < -8388608) {
+		data_exception e("uint24 value should not be less than -8388608.");
+		throw (e);
+	}
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_work.int32_val = std::byteswap(l_work.int32_val);
+	}
+	if ((std::endian::native == std::endian::big) || m_network_byte_order) {
+		l_pass.assign(l_work.raw + 1, l_work.raw + 4);
+	} else {
+		l_pass.assign(l_work.raw, l_work.raw + 3);
+	}
+	write_raw_data(l_pass);		
+}
+
+std::int32_t data::read_int24()
+{
+	std::vector<std::uint8_t> l_read = read_raw_data(3);
+	size4_union l_ret;
+	l_ret.int32_val = 0;
+	if (m_network_byte_order) {
+		if ((l_read[0] & 0x80) > 0) // sign extension
+			l_read.insert(l_read.begin(), 0xff);
+		else
+			l_read.insert(l_read.begin(), 0x00);
+	} else {
+		if ((l_read[2] & 0x80) > 0)
+			l_read.push_back(0xff);
+		else
+			l_read.push_back(0x00);
+	}
+	std::copy(l_read.begin(), l_read.end(), l_ret.raw);
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_ret.int32_val = std::byteswap(l_ret.int32_val);
+	}
+	return l_ret.int32_val;	
+}
+
+// 40 bit integers
+
+void data::write_uint40(std::uint64_t a_uint64)
+{
+	std::vector<std::uint8_t> l_pass;
+	size8_union l_work;
+	l_work.uint64_val = a_uint64;
+	if (l_work.uint64_val > 1099511627775ULL) {
+		data_exception e("uint24 value should not exceed 1099511627775.");
+		throw (e);
+	}
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_work.uint64_val = std::byteswap(l_work.uint64_val);
+	}
+	if ((std::endian::native == std::endian::big) || m_network_byte_order) {
+		l_pass.assign(l_work.raw + 3, l_work.raw + 8);
+	} else {
+		l_pass.assign(l_work.raw, l_work.raw + 5);
+	}
+	write_raw_data(l_pass);	
+}
+
+std::uint64_t data::read_uint40()
+{
+	std::vector<std::uint8_t> l_read = read_raw_data(5);
+	size8_union l_ret;
+	l_ret.uint64_val = 0;
+	if (m_network_byte_order) {
+		l_read.insert(l_read.begin(), 0x00);
+		l_read.insert(l_read.begin(), 0x00);
+		l_read.insert(l_read.begin(), 0x00);
+	} else {
+		l_read.push_back(0x00);
+		l_read.push_back(0x00);
+		l_read.push_back(0x00);
+	}
+	std::copy(l_read.begin(), l_read.end(), l_ret.raw);
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_ret.uint64_val = std::byteswap(l_ret.uint64_val);
+	}
+	return l_ret.uint64_val;	
+}
+
+void data::write_int40(std::int64_t a_int64)
+{
+	std::vector<std::uint8_t> l_pass;
+	size8_union l_work;
+	l_work.int64_val = a_int64;
+	if (l_work.int64_val > 549755813887LL) {
+		data_exception e("uint24 value should not exceed 549755813887.");
+		throw (e);
+	}
+	if (l_work.int64_val < -549755813888LL) {
+		data_exception e("uint24 value should not be less than -549755813888.");
+		throw (e);
+	}
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_work.int64_val = std::byteswap(l_work.int64_val);
+	}
+	if ((std::endian::native == std::endian::big) || m_network_byte_order) {
+		l_pass.assign(l_work.raw + 3, l_work.raw + 8);
+	} else {
+		l_pass.assign(l_work.raw, l_work.raw + 5);
+	}
+	write_raw_data(l_pass);		
+}
+
+std::int64_t data::read_int40()
+{
+	std::vector<std::uint8_t> l_read = read_raw_data(5);
+	size8_union l_ret;
+	l_ret.int64_val = 0;
+	if (m_network_byte_order) {
+		if ((l_read[0] & 0x80) > 0) { // sign extension
+			l_read.insert(l_read.begin(), 0xff);
+			l_read.insert(l_read.begin(), 0xff);
+			l_read.insert(l_read.begin(), 0xff);
+		} else {
+			l_read.insert(l_read.begin(), 0x00);
+			l_read.insert(l_read.begin(), 0x00);
+			l_read.insert(l_read.begin(), 0x00);
+		}
+	} else {
+		if ((l_read[4] & 0x80) > 0) {
+			l_read.push_back(0xff);
+			l_read.push_back(0xff);
+			l_read.push_back(0xff);
+		} else {
+			l_read.push_back(0x00);
+			l_read.push_back(0x00);
+			l_read.push_back(0x00);
+		}
+	}
+	std::copy(l_read.begin(), l_read.end(), l_ret.raw);
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_ret.int64_val = std::byteswap(l_ret.int64_val);
+	}
+	return l_ret.int64_val;	
+}
+
+// 48 bit integers
+
+void data::write_uint48(std::uint64_t a_uint64)
+{
+	std::vector<std::uint8_t> l_pass;
+	size8_union l_work;
+	l_work.uint64_val = a_uint64;
+	if (l_work.uint64_val > 281474976710655ULL) {
+		data_exception e("uint24 value should not exceed 281474976710655.");
+		throw (e);
+	}
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_work.uint64_val = std::byteswap(l_work.uint64_val);
+	}
+	if ((std::endian::native == std::endian::big) || m_network_byte_order) {
+		l_pass.assign(l_work.raw + 2, l_work.raw + 8);
+	} else {
+		l_pass.assign(l_work.raw, l_work.raw + 6);
+	}
+	write_raw_data(l_pass);	
+}
+
+std::uint64_t data::read_uint48()
+{
+	std::vector<std::uint8_t> l_read = read_raw_data(6);
+	size8_union l_ret;
+	l_ret.uint64_val = 0;
+	if (m_network_byte_order) {
+		l_read.insert(l_read.begin(), 0x00);
+		l_read.insert(l_read.begin(), 0x00);
+	} else {
+		l_read.push_back(0x00);
+		l_read.push_back(0x00);
+	}
+	std::copy(l_read.begin(), l_read.end(), l_ret.raw);
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_ret.uint64_val = std::byteswap(l_ret.uint64_val);
+	}
+	return l_ret.uint64_val;		
+}
+
+void data::write_int48(std::int64_t a_int64)
+{
+	std::vector<std::uint8_t> l_pass;
+	size8_union l_work;
+	l_work.int64_val = a_int64;
+	if (l_work.int64_val > 140737488355327LL) {
+		data_exception e("uint24 value should not exceed 140737488355327.");
+		throw (e);
+	}
+	if (l_work.int64_val < -140737488355328LL) {
+		data_exception e("uint24 value should not be less than -140737488355328.");
+		throw (e);
+	}
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_work.int64_val = std::byteswap(l_work.int64_val);
+	}
+	if ((std::endian::native == std::endian::big) || m_network_byte_order) {
+		l_pass.assign(l_work.raw + 2, l_work.raw + 8);
+	} else {
+		l_pass.assign(l_work.raw, l_work.raw + 6);
+	}
+	write_raw_data(l_pass);		
+}
+
+std::int64_t data::read_int48()
+{
+	std::vector<std::uint8_t> l_read = read_raw_data(6);
+	size8_union l_ret;
+	l_ret.int64_val = 0;
+	if (m_network_byte_order) {
+		if ((l_read[0] & 0x80) > 0) { // sign extension
+			l_read.insert(l_read.begin(), 0xff);
+			l_read.insert(l_read.begin(), 0xff);
+		} else {
+			l_read.insert(l_read.begin(), 0x00);
+			l_read.insert(l_read.begin(), 0x00);
+		}
+	} else {
+		if ((l_read[4] & 0x80) > 0) {
+			l_read.push_back(0xff);
+			l_read.push_back(0xff);
+		} else {
+			l_read.push_back(0x00);
+			l_read.push_back(0x00);
+		}
+	}
+	std::copy(l_read.begin(), l_read.end(), l_ret.raw);
+	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
+		l_ret.int64_val = std::byteswap(l_ret.int64_val);
+	}
+	return l_ret.int64_val;	
+}
+
 // floats
 
 void data::write_float(float a_float)
