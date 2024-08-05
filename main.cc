@@ -491,7 +491,7 @@ int main(int argc, char **argv)
 	doubletime dta;
 	ctx.log(std::format("Now is {} long double", (long double)dta));
 	ctx.log(std::format("Now is {} double", (double)dta));
-	ctx.log(std::format("Now epoch seconds {}", (std::uint64_t)dta));
+	ctx.log(std::format("Now epoch seconds {}", (std::int64_t)dta));
 	ctx.log(std::format("Now as iso8601_ms {}", dta.iso8601_ms()));
 	ctx.log(std::format("Now as iso8601_us {}", dta.iso8601_us()));
 	ctx.log(std::format("Now as iso8601_ns {}", dta.iso8601_ns()));
@@ -502,6 +502,31 @@ int main(int argc, char **argv)
 	while (!dta.yet(1.0))
 		std::this_thread::sleep_for(std::chrono::milliseconds(20));
 	ctx.log("It is now dta+1.0 seconds.");
+	
+	doubletime dtb;
+	dtb.set_time(2024, 9, 1, 12, 0, 0);
+	ctx.log(std::format("dtb as iso8601_us {}, it is {} seconds in the future.", dtb.iso8601_us(), (long double)dtb - doubletime::now_as_long_double()));
+	
+	doubletime dtc;
+	dtc.set_time_epoch_seconds(1000000000);
+	ctx.log(std::format("epoch 1 billion was iso8601_us {}, it is {} seconds in the past.", dtc.iso8601_us(), doubletime::now_as_long_double() - (long double)dtc));
+	
+	doubletime dtd;
+	dtd = 1000000000.554503;
+//	dtd.set_time_doubletime(1000000000.554503);
+	ctx.log(std::format("epoch 1 billion double was iso8601_us {}, it is {} seconds in the past.", dtd.iso8601_us(), doubletime::now_as_long_double() - (long double)dtd));
+	
+	doubletime dte = 1000000000.554503757L;
+//	dte.set_time_long_doubletime(1000000000.554503756L);
+	ctx.log(std::format("epoch 1 billion long double was iso8601_ns {}, it is {} seconds in the past.", dte.iso8601_ns(), doubletime::now_as_long_double() - (long double)dte));
+	
+	dtb = dte;
+	ctx.log(std::format("copied dtb as iso8601_ns {}", dtb.iso8601_ns()));
+	
+	doubletime dtf(dtb);
+	ctx.log(std::format("copy constructed dtf as iso8601_ns {}", dtf.iso8601_ns()));
+	doubletime dtg(1500000002.0L);
+	ctx.log(std::format("long double constructed dtg as iso8601_ns {}", dtg.iso8601_ns()));
 	
 	ctx.unregister_thread();
 	ctx.log("thread should be missing");
