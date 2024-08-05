@@ -11,6 +11,8 @@
 #include <source_location>
 #include <fstream>
 
+#include "doubletime.h"
+
 namespace ss {
 
 const std::string COLOR_BLACK = "\033[30m";
@@ -63,8 +65,6 @@ const std::unordered_map<std::string, std::string> color_tokens = {
 	{ "%%COLORWHITE%%", COLOR_WHITE },
 	{ "%%COLORDEFAULT%%", COLOR_DEFAULT }
 };
-
-std::string iso8601();
 
 class target_base {
 public:

@@ -6,7 +6,7 @@ CPP := g++
 LD := g++
 LDFLAGS = -lpthread -Wl,-rpath=/usr/local/lib64 -shared -Wl,-soname,libss2xlog.so.1 -rdynamic
 
-OBJS = log.o
+OBJS = log.o doubletime.o
 
 all: libss2xlog
 

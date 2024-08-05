@@ -8,6 +8,7 @@
 #include <filesystem>
 
 #include "log.h"
+#include "doubletime.h"
 #include "icr.h"
 #include "data.h"
 
@@ -440,9 +441,6 @@ int main(int argc, char **argv)
 	comp_tester(x1, x2);
 	comp_tester(x2, x1);
 	
-	ctx.unregister_thread();
-	ctx.log("thread should be missing");
-	
 	// test specialized integer lengths
 	
 	ss::data spec1;
@@ -488,6 +486,21 @@ int main(int argc, char **argv)
 	std::int64_t l_spec4_4 = spec4.read_int48();
 	ctx.log(std::format("read back {:x} {:x} {:x} {:x}", l_spec4_1, l_spec4_2, l_spec4_3, l_spec4_4));
 	ctx.log(std::format("decimal read back {} {} {} {}", l_spec4_1, l_spec4_2, l_spec4_3, l_spec4_4));
+	
+	// doubletime
+	doubletime dta;
+	ctx.log(std::format("Now is {} long double", (long double)dta));
+	ctx.log(std::format("Now is {} double", (double)dta));
+	ctx.log(std::format("Now epoch seconds {}", (std::uint64_t)dta));
+	ctx.log(std::format("Now as iso8601_ms {}", dta.iso8601_ms()));
+	ctx.log(std::format("Now as iso8601_us {}", dta.iso8601_us()));
+	ctx.log(std::format("Now as iso8601_ns {}", dta.iso8601_ns()));
+	ctx.log(std::format("Now as iso8601_ms_zulu {}", dta.iso8601_ms_zulu()));
+	ctx.log(std::format("Now as iso8601_us_zulu {}", dta.iso8601_us_zulu()));
+	ctx.log(std::format("Now as iso8601_ns_zulu {}", dta.iso8601_ns_zulu()));
+	
+	ctx.unregister_thread();
+	ctx.log("thread should be missing");
 	
 	return 0;
 }

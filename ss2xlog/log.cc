@@ -6,16 +6,17 @@ namespace log {
 
 const std::string prio_str[] = { "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "INFO", "DEBUG" }; // Names of priority values.
 
-std::string iso8601()
-{
-	std::stringstream l_ret_ss;
-	std::chrono::high_resolution_clock::time_point l_now = std::chrono::high_resolution_clock::now();
-	uint64_t frac_us = std::chrono::duration_cast<std::chrono::microseconds>(l_now.time_since_epoch()).count() % 1000000;
-	std::time_t l_now_tt = std::chrono::high_resolution_clock::to_time_t(l_now);
-	struct std::tm *l_now_tm = std::localtime(&l_now_tt);
-	l_ret_ss << std::put_time(l_now_tm, "%FT%T") << "," << std::setw(6) << std::setfill('0') << frac_us;
-	return l_ret_ss.str();
-}
+// use the routines in doubletime instead
+//std::string iso8601()
+//{
+//	std::stringstream l_ret_ss;
+//	std::chrono::high_resolution_clock::time_point l_now = std::chrono::high_resolution_clock::now();
+//	uint64_t frac_us = std::chrono::duration_cast<std::chrono::microseconds>(l_now.time_since_epoch()).count() % 1000000;
+//	std::time_t l_now_tt = std::chrono::high_resolution_clock::to_time_t(l_now);
+//	struct std::tm *l_now_tm = std::localtime(&l_now_tt);
+//	l_ret_ss << std::put_time(l_now_tm, "%FT%T") << "," << std::setw(6) << std::setfill('0') << frac_us;
+//	return l_ret_ss.str();
+//}
 
 // target_base
 
@@ -62,7 +63,7 @@ void target_base::accept_logtext(std::string a_line, std::string a_thread_name, 
 	}
 	found = l_out.find("%%iso8601%%");
 	if (found != std::string::npos) {
-		l_out.replace(found, 11, iso8601());
+		l_out.replace(found, 11, doubletime::now_as_iso8601_us());
 	}
 	found = l_out.find("%%priority%%");
 	if (found != std::string::npos) {
