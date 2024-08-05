@@ -20,6 +20,12 @@ void doubletime::now()
 	m_time = (long double)m_sec + ((long double)m_ns / 1000000000.0L);
 }
 
+bool doubletime::yet(long double a_increment)
+{
+	doubletime l_now;
+	return (l_now.m_time >= (m_time + a_increment));
+}
+
 std::string doubletime::iso8601_utility(bool a_islocal, unsigned int a_trim)
 {
 	std::stringstream l_ret;

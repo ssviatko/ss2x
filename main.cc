@@ -499,6 +499,10 @@ int main(int argc, char **argv)
 	ctx.log(std::format("Now as iso8601_us_zulu {}", dta.iso8601_us_zulu()));
 	ctx.log(std::format("Now as iso8601_ns_zulu {}", dta.iso8601_ns_zulu()));
 	
+	while (!dta.yet(1.0))
+		std::this_thread::sleep_for(std::chrono::milliseconds(20));
+	ctx.log("It is now dta+1.0 seconds.");
+	
 	ctx.unregister_thread();
 	ctx.log("thread should be missing");
 	

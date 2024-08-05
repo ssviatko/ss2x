@@ -19,6 +19,7 @@ public:
 	~doubletime();
 	
 	void now();
+	bool yet(long double a_increment); // have we reached now + time in seconds yet?
 	
 	std::string iso8601_ms();
 	std::string iso8601_us();
