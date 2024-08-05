@@ -19,6 +19,7 @@ public:
 	~doubletime();
 	
 	void now();
+	
 	std::string iso8601_ms();
 	std::string iso8601_us();
 	std::string iso8601_ns();
