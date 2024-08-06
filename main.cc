@@ -488,7 +488,7 @@ int main(int argc, char **argv)
 	ctx.log(std::format("decimal read back {} {} {} {}", l_spec4_1, l_spec4_2, l_spec4_3, l_spec4_4));
 	
 	// doubletime
-	doubletime dta;
+	ss::doubletime dta;
 	ctx.log(std::format("Now is {} long double", (long double)dta));
 	ctx.log(std::format("Now is {} double", (double)dta));
 	ctx.log(std::format("Now epoch seconds {}", (std::int64_t)dta));
@@ -503,33 +503,37 @@ int main(int argc, char **argv)
 		std::this_thread::sleep_for(std::chrono::milliseconds(20));
 	ctx.log("It is now dta+1.0 seconds.");
 	
-	doubletime dtb;
+	ss::doubletime dtb;
 	dtb.set_time(2024, 9, 1, 12, 0, 0);
-	ctx.log(std::format("dtb as iso8601_us {}, it is {} seconds in the future.", dtb.iso8601_us(), (long double)dtb - doubletime::now_as_long_double()));
+	ctx.log(std::format("dtb as iso8601_us {}, it is {} seconds in the future.", dtb.iso8601_us(), (long double)dtb - ss::doubletime::now_as_long_double()));
 	
-	doubletime dtc;
+	ss::doubletime dtc;
 	dtc.set_time_epoch_seconds(1000000000);
-	ctx.log(std::format("epoch 1 billion was iso8601_us {}, it is {} seconds in the past.", dtc.iso8601_us(), doubletime::now_as_long_double() - (long double)dtc));
+	ctx.log(std::format("epoch 1 billion was iso8601_us {}, it is {} seconds in the past.", dtc.iso8601_us(), ss::doubletime::now_as_long_double() - (long double)dtc));
 	
-	doubletime dtd;
+	ss::doubletime dtd;
 	dtd = 1000000000.554503;
 //	dtd.set_time_doubletime(1000000000.554503);
-	ctx.log(std::format("epoch 1 billion double was iso8601_us {}, it is {} seconds in the past.", dtd.iso8601_us(), doubletime::now_as_long_double() - (long double)dtd));
+	ctx.log(std::format("epoch 1 billion double was iso8601_us {}, it is {} seconds in the past.", dtd.iso8601_us(), ss::doubletime::now_as_long_double() - (long double)dtd));
 	
-	doubletime dte = 1000000000.554503757L;
+	ss::doubletime dte = 1000000000.554503757L;
 //	dte.set_time_long_doubletime(1000000000.554503756L);
-	ctx.log(std::format("epoch 1 billion long double was iso8601_ns {}, it is {} seconds in the past.", dte.iso8601_ns(), doubletime::now_as_long_double() - (long double)dte));
+	ctx.log(std::format("epoch 1 billion long double was iso8601_ns {}, it is {} seconds in the past.", dte.iso8601_ns(), ss::doubletime::now_as_long_double() - (long double)dte));
 	
 	dtb = dte;
 	ctx.log(std::format("copied dtb as iso8601_ns {}", dtb.iso8601_ns()));
 	
-	doubletime dtf(dtb);
+	ss::doubletime dtf(dtb);
 	ctx.log(std::format("copy constructed dtf as iso8601_ns {}", dtf.iso8601_ns()));
-	doubletime dtg(1500000002.0L);
+	ss::doubletime dtg(1500000002.0L);
 	ctx.log(std::format("long double constructed dtg as iso8601_ns {}", dtg.iso8601_ns()));
 	
 	ctx.unregister_thread();
 	ctx.log("thread should be missing");
+	
+	ss::doubletime dth;
+	ctx.log(std::format("local breakouts: {} {} {} {} {}:{}:{} day of year {} isdst {}", dth.weekday_name(dth.local_day_of_week()), dth.local_year(), dth.month_name_abbrev(dth.local_month()), dth.local_day(), dth.local_hour(), dth.local_minute(), dth.local_second(), dth.local_day_of_year(), dth.is_dst()));
+	ctx.log(std::format("zulu  breakouts: {} {} {} {} {}:{}:{} day of year {}", dth.weekday_name(dth.local_day_of_week()), dth.zulu_year(), dth.month_name_abbrev(dth.zulu_month()), dth.zulu_day(), dth.zulu_hour(), dth.zulu_minute(), dth.zulu_second(), dth.zulu_day_of_year()));
 	
 	return 0;
 }

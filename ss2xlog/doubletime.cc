@@ -1,5 +1,7 @@
 #include "doubletime.h"
 
+namespace ss {
+
 doubletime::doubletime()
 {
 	now();
@@ -13,6 +15,11 @@ doubletime::doubletime(const double a_double)
 doubletime::doubletime(const long double a_long_double)
 {
 	set_time_long_doubletime(a_long_double);
+}
+
+doubletime::doubletime(const std::int64_t a_epoch)
+{
+	set_time_epoch_seconds(a_epoch);
 }
 
 void doubletime::eat(const doubletime& a_doubletime)
@@ -145,6 +152,127 @@ doubletime& doubletime::operator=(const long double a_long_double)
 	return *this;
 }
 
+doubletime& doubletime::operator=(const std::int64_t a_epoch)
+{
+	set_time_epoch_seconds(a_epoch);
+	return *this;
+}
+
+// breakouts
+
+void doubletime::get_tm(bool a_islocal)
+{
+	time_t l_tt = std::chrono::system_clock::to_time_t(m_tp);
+	if (a_islocal)
+		m_tm = *localtime(&l_tt);
+	else
+		m_tm = *gmtime(&l_tt);
+}
+
+unsigned int doubletime::zulu_year()
+{
+	get_tm(false);
+	return m_tm.tm_year + 1900;
+}
+
+unsigned int doubletime::local_year()
+{
+	get_tm(true);
+	return m_tm.tm_year + 1900;
+}
+
+unsigned int doubletime::zulu_month()
+{
+	get_tm(false);
+	return m_tm.tm_mon + 1;
+}
+
+unsigned int doubletime::local_month()
+{
+	get_tm(true);
+	return m_tm.tm_mon + 1;
+}
+
+unsigned int doubletime::zulu_day()
+{
+	get_tm(false);
+	return m_tm.tm_mday;
+}
+
+unsigned int doubletime::local_day()
+{
+	get_tm(true);
+	return m_tm.tm_mday;
+}
+
+unsigned int doubletime::zulu_day_of_week()
+{
+	get_tm(false);
+	return m_tm.tm_wday;
+}
+
+unsigned int doubletime::local_day_of_week()
+{
+	get_tm(true);
+	return m_tm.tm_wday;
+}
+
+unsigned int doubletime::zulu_hour()
+{
+	get_tm(false);
+	return m_tm.tm_hour;
+}
+
+unsigned int doubletime::local_hour()
+{
+	get_tm(true);
+	return m_tm.tm_hour;
+}
+
+unsigned int doubletime::zulu_minute()
+{
+	get_tm(false);
+	return m_tm.tm_min;
+}
+
+unsigned int doubletime::local_minute()
+{
+	get_tm(true);
+	return m_tm.tm_min;
+}
+
+unsigned int doubletime::zulu_second()
+{
+	get_tm(false);
+	return m_tm.tm_sec;
+}
+
+unsigned int doubletime::local_second()
+{
+	get_tm(true);
+	return m_tm.tm_sec;
+}
+
+unsigned int doubletime::zulu_day_of_year()
+{
+	get_tm(false);
+	return m_tm.tm_yday;
+}
+
+unsigned int doubletime::local_day_of_year()
+{
+	get_tm(true);
+	return m_tm.tm_yday;
+}
+
+bool doubletime::is_dst()
+{
+	get_tm(true);
+	return (m_tm.tm_isdst > 0);
+}
+
+// timestamps
+
 std::string doubletime::iso8601_ms()
 {
 	return iso8601_utility(true, 3);
@@ -213,7 +341,7 @@ std::string doubletime::now_as_iso8601_ns_zulu()
 	return l_now.iso8601_ns_zulu();
 }
 
-std::uint64_t doubletime::now_as_epoch_seconds()
+std::int64_t doubletime::now_as_epoch_seconds()
 {
 	doubletime l_now;
 	return l_now.epoch_seconds();
@@ -230,3 +358,5 @@ long double doubletime::now_as_long_double()
 	doubletime l_now;
 	return (long double)l_now;
 }
+
+} // namespace ss
