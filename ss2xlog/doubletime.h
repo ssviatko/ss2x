@@ -41,6 +41,7 @@ public:
 	
 	// utility functions
 	void now();
+	bool yet(); // have we reached this time yet? true = in the past, false = not yet
 	bool yet(long double a_increment); // have we reached now + time in seconds yet?
 	
 	// setters
@@ -48,6 +49,8 @@ public:
 	void set_time_epoch_seconds(std::int64_t a_epoch);
 	void set_time_doubletime(double a_time);
 	void set_time_long_doubletime(long double a_time);
+	void delta_time_doubletime(double a_time); // add/subtract a_time from time
+	void delta_time_long_doubletime(long double a_time);
 	
 	// getters
 	std::int64_t epoch_seconds() const { return m_sec; }

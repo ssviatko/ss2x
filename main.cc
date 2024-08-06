@@ -540,6 +540,8 @@ int main(int argc, char **argv)
 	std::cout << "standard cout printing of dth: " << dth << std::endl;
 	ctx.log(std::format("local format printing of dth {}", dth));
 	ctx.log(std::format("zulu  format printing of dth {:Z}", dth));
+	dth.delta_time_long_doubletime(65.0L * 60.0L);
+	ctx.log(std::format("dth 65 minutes in future: {} reached it yet? {}", dth, dth.yet()));
 	
 	return 0;
 }

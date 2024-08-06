@@ -62,6 +62,12 @@ bool doubletime::yet(long double a_increment)
 	return (l_now.m_time >= (m_time + a_increment));
 }
 
+bool doubletime::yet()
+{
+	doubletime l_now;
+	return (l_now.m_time >= m_time);
+}
+
 void doubletime::set_time(unsigned int a_year, unsigned int a_month, unsigned int a_day, unsigned int a_hour, unsigned int a_minute, unsigned int a_second)
 {
 	struct tm t;
@@ -109,6 +115,16 @@ void doubletime::set_time_long_doubletime(long double a_time)
 	m_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(m_epoch).count() % 1000000000;
 	m_sec = std::chrono::duration_cast<std::chrono::seconds>(m_epoch).count();
 	m_time = (long double)m_sec + ((long double)m_ns / 1000000000.0L);
+}
+
+void doubletime::delta_time_doubletime(double a_time)
+{
+	set_time_long_doubletime(m_time + (long double)a_time);
+}
+
+void doubletime::delta_time_long_doubletime(long double a_time)
+{
+	set_time_long_doubletime(m_time + a_time);
 }
 
 std::string doubletime::iso8601_utility(bool a_islocal, unsigned int a_trim)
