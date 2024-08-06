@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <array>
 #include <memory>
 #include <chrono>
 #include <thread>
@@ -45,6 +46,8 @@ enum prio_t {
 	INFO, // Info
 	DEBUG // Debug
 };
+
+const std::array<std::string, 8> prio_str = { "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "INFO", "DEBUG" }; // Names of priority values.
 
 const std::unordered_map<std::string, std::string> color_tokens = {
 	{ "%%COLORBLACK%%", COLOR_BLACK },

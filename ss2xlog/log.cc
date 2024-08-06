@@ -4,20 +4,6 @@ namespace ss {
 
 namespace log {
 
-const std::string prio_str[] = { "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "INFO", "DEBUG" }; // Names of priority values.
-
-// use the routines in doubletime instead
-//std::string iso8601()
-//{
-//	std::stringstream l_ret_ss;
-//	std::chrono::high_resolution_clock::time_point l_now = std::chrono::high_resolution_clock::now();
-//	uint64_t frac_us = std::chrono::duration_cast<std::chrono::microseconds>(l_now.time_since_epoch()).count() % 1000000;
-//	std::time_t l_now_tt = std::chrono::high_resolution_clock::to_time_t(l_now);
-//	struct std::tm *l_now_tm = std::localtime(&l_now_tt);
-//	l_ret_ss << std::put_time(l_now_tm, "%FT%T") << "," << std::setw(6) << std::setfill('0') << frac_us;
-//	return l_ret_ss.str();
-//}
-
 // target_base
 
 target_base::target_base(prio_t a_threshold, std::string a_format)
