@@ -52,7 +52,8 @@ void failure_services::install_signal_handler()
 
 void failure_services::invoke_sigint_handler()
 {
-	sigint_handler();
+	if (sigint_handler_installed)
+		sigint_handler();
 }
 
 void failure_services::handle_signal(int signo)
