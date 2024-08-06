@@ -2,6 +2,7 @@
 #define DOUBLETIME_H
 
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <sstream>
 #include <chrono>
@@ -72,6 +73,7 @@ public:
 	unsigned int zulu_day_of_year();
 	unsigned int local_day_of_year();
 	bool is_dst(); // assumes local time
+	double gmtoff(); // assumes local time
 
 	// iso8601 time stamps
 	std::string iso8601_ms();
@@ -101,6 +103,9 @@ public:
 	static std::int64_t now_as_epoch_seconds();
 	static double now_as_double();
 	static long double now_as_long_double();
+	
+	// printing and formatting
+	friend std::ostream& operator<<(std::ostream &os, doubletime& a_dt); // local
 
 protected:
 	std::chrono::system_clock::time_point m_tp;
@@ -112,5 +117,28 @@ protected:
 };
 
 } // namespace ss
+
+template <>
+struct std::formatter<ss::doubletime> {
+	constexpr auto parse(std::format_parse_context& ctx) {
+		m_is_zulu = false;
+		auto pos = ctx.begin();
+		while (pos != ctx.end() && *pos != '}') {
+			if (*pos == 'Z')
+				m_is_zulu = true;
+			++pos;
+		}
+		return pos;
+	}
+
+	auto format(ss::doubletime& obj, std::format_context& ctx) const {
+		if (m_is_zulu)
+			return std::format_to(ctx.out(), "{}-{}-{} {:0>2}:{:0>2}:{:0>2}", obj.zulu_year(), obj.month_name_abbrev(obj.zulu_month()), obj.zulu_day(), obj.zulu_hour(), obj.zulu_minute(), obj.zulu_second());
+		else
+			return std::format_to(ctx.out(), "{}-{}-{} {:0>2}:{:0>2}:{:0>2}", obj.local_year(), obj.month_name_abbrev(obj.local_month()), obj.local_day(), obj.local_hour(), obj.local_minute(), obj.local_second());
+	}
+
+	bool m_is_zulu;
+};
 
 #endif // DOUBLETIME_H

@@ -271,6 +271,12 @@ bool doubletime::is_dst()
 	return (m_tm.tm_isdst > 0);
 }
 
+double doubletime::gmtoff()
+{
+	get_tm(true);
+	return ((double)m_tm.tm_gmtoff / 3600.0);
+}
+
 // timestamps
 
 std::string doubletime::iso8601_ms()
@@ -357,6 +363,16 @@ long double doubletime::now_as_long_double()
 {
 	doubletime l_now;
 	return (long double)l_now;
+}
+
+// printing and formatting
+
+std::ostream& operator<<(std::ostream &os, doubletime& a_dt)
+{
+	os << a_dt.local_year() << "-" << a_dt.month_name_abbrev(a_dt.local_month()) << "-" << a_dt.local_day() << " ";
+	os << std::setfill('0') << std::setw(2) << a_dt.local_hour() << ":" << std::setfill('0') << std::setw(2) << a_dt.local_minute();
+	os << ":" << std::setfill('0') << std::setw(2) << a_dt.local_second();
+	return os;
 }
 
 } // namespace ss

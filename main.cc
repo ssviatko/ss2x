@@ -532,8 +532,14 @@ int main(int argc, char **argv)
 	ctx.log("thread should be missing");
 	
 	ss::doubletime dth;
-	ctx.log(std::format("local breakouts: {} {} {} {} {}:{}:{} day of year {} isdst {}", dth.weekday_name(dth.local_day_of_week()), dth.local_year(), dth.month_name_abbrev(dth.local_month()), dth.local_day(), dth.local_hour(), dth.local_minute(), dth.local_second(), dth.local_day_of_year(), dth.is_dst()));
-	ctx.log(std::format("zulu  breakouts: {} {} {} {} {}:{}:{} day of year {}", dth.weekday_name(dth.local_day_of_week()), dth.zulu_year(), dth.month_name_abbrev(dth.zulu_month()), dth.zulu_day(), dth.zulu_hour(), dth.zulu_minute(), dth.zulu_second(), dth.zulu_day_of_year()));
+	ctx.log(std::format("local breakouts: {} {} {} {} {}:{}:{} day of year {} isdst {} gmtoff {}",
+		dth.weekday_name(dth.local_day_of_week()), dth.local_year(), dth.month_name_abbrev(dth.local_month()), dth.local_day(), dth.local_hour(), dth.local_minute(), dth.local_second(),
+		dth.local_day_of_year(), dth.is_dst(), dth.gmtoff()));
+	ctx.log(std::format("zulu  breakouts: {} {} {} {} {}:{}:{} day of year {}",
+		dth.weekday_name(dth.local_day_of_week()), dth.zulu_year(), dth.month_name_abbrev(dth.zulu_month()), dth.zulu_day(), dth.zulu_hour(), dth.zulu_minute(), dth.zulu_second(), dth.zulu_day_of_year()));
+	std::cout << "standard cout printing of dth: " << dth << std::endl;
+	ctx.log(std::format("local format printing of dth {}", dth));
+	ctx.log(std::format("zulu  format printing of dth {:Z}", dth));
 	
 	return 0;
 }
