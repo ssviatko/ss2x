@@ -4,6 +4,7 @@
   <Project Name="ss2xlog" Path="ss2xlog/ss2xlog.project"/>
   <Project Name="ss2xicr" Path="ss2xicr/ss2xicr.project"/>
   <Project Name="ss2xdata" Path="ss2xdata/ss2xdata.project"/>
+  <Project Name="ss2xfs" Path="ss2xfs/ss2xfs.project"/>
   <BuildMatrix>
     <WorkspaceConfiguration Name="Debug" Selected="yes">
       <Environment/>
@@ -11,6 +12,7 @@
       <Project Name="ss2xlog" ConfigName="Debug"/>
       <Project Name="ss2xicr" ConfigName="Debug"/>
       <Project Name="ss2xdata" ConfigName="Debug"/>
+      <Project Name="ss2xfs" ConfigName="Debug"/>
     </WorkspaceConfiguration>
     <WorkspaceConfiguration Name="Release" Selected="yes">
       <Environment/>
@@ -18,6 +20,7 @@
       <Project Name="ss2xlog" ConfigName="Release"/>
       <Project Name="ss2xicr" ConfigName="Release"/>
       <Project Name="ss2xdata" ConfigName="Release"/>
+      <Project Name="ss2xfs" ConfigName="Release"/>
     </WorkspaceConfiguration>
   </BuildMatrix>
 </CodeLite_Workspace>

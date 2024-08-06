@@ -11,6 +11,7 @@
 #include "doubletime.h"
 #include "icr.h"
 #include "data.h"
+#include "fs.h"
 
 typedef struct {
 	std::uint64_t key;
@@ -542,6 +543,9 @@ int main(int argc, char **argv)
 	ctx.log(std::format("zulu  format printing of dth {:Z}", dth));
 	dth.delta_time_long_doubletime(65.0L * 60.0L);
 	ctx.log(std::format("dth 65 minutes in future: {} reached it yet? {}", dth, dth.yet()));
+	
+	// failure services
+	ss::failure_services& l_fs = ss::failure_services::get();
 	
 	return 0;
 }
