@@ -277,6 +277,12 @@ double doubletime::gmtoff()
 	return ((double)m_tm.tm_gmtoff / 3600.0);
 }
 
+std::string doubletime::tzstr()
+{
+	get_tm(true);
+	return std::string(m_tm.tm_zone);
+}
+
 // timestamps
 
 std::string doubletime::iso8601_ms()

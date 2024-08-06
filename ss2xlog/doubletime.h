@@ -74,6 +74,7 @@ public:
 	unsigned int local_day_of_year();
 	bool is_dst(); // assumes local time
 	double gmtoff(); // assumes local time
+	std::string tzstr(); // time zone string
 
 	// iso8601 time stamps
 	std::string iso8601_ms();

@@ -532,9 +532,9 @@ int main(int argc, char **argv)
 	ctx.log("thread should be missing");
 	
 	ss::doubletime dth;
-	ctx.log(std::format("local breakouts: {} {} {} {} {}:{}:{} day of year {} isdst {} gmtoff {}",
+	ctx.log(std::format("local breakouts: {} {} {} {} {}:{}:{} day of year {} isdst {} gmtoff {} tz {}",
 		dth.weekday_name(dth.local_day_of_week()), dth.local_year(), dth.month_name_abbrev(dth.local_month()), dth.local_day(), dth.local_hour(), dth.local_minute(), dth.local_second(),
-		dth.local_day_of_year(), dth.is_dst(), dth.gmtoff()));
+		dth.local_day_of_year(), dth.is_dst(), dth.gmtoff(), dth.tzstr()));
 	ctx.log(std::format("zulu  breakouts: {} {} {} {} {}:{}:{} day of year {}",
 		dth.weekday_name(dth.local_day_of_week()), dth.zulu_year(), dth.month_name_abbrev(dth.zulu_month()), dth.zulu_day(), dth.zulu_hour(), dth.zulu_minute(), dth.zulu_second(), dth.zulu_day_of_year()));
 	std::cout << "standard cout printing of dth: " << dth << std::endl;
