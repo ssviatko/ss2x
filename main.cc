@@ -545,8 +545,14 @@ int main(int argc, char **argv)
 	ctx.log(std::format("dth 65 minutes in future: {} reached it yet? {}", dth, dth.yet()));
 	
 	// failure services
+	auto ctrlc = []() {
+		std::cout << "Caught control-C, exiting..." << std::endl;
+		exit(EXIT_SUCCESS);
+	};
+	
 	ss::failure_services& l_fs = ss::failure_services::get();
 	l_fs.install_signal_handler();
+	l_fs.install_sigint_handler(ctrlc);
 	std::cout << "press control-C or you will get a SIGSEGV" << std::endl;
 	for (int i = 0; i < 250; ++i)
 		std::this_thread::sleep_for(std::chrono::milliseconds(20));

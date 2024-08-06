@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <format>
 #include <stacktrace>
+#include <functional>
 
 #include <signal.h>
 
@@ -37,9 +38,15 @@ class failure_services {
 public:
 	static failure_services& get();
 	void install_signal_handler();
+	void install_sigint_handler(std::function<void(void)> a_handler);
+	void invoke_sigint_handler();
 	
 protected:
 	bool m_handler_installed;
+	
+	// SIGINT stuff
+	static bool sigint_handler_installed;
+	static std::function<void(void)> sigint_handler;
 };
 
 } // namespace ss

@@ -2,10 +2,13 @@
 
 namespace ss {
 
+bool failure_services::sigint_handler_installed = false;
+std::function<void(void)> failure_services::sigint_handler;
+
 failure_services::failure_services()
 : m_handler_installed(false)
 {
-	
+	sigint_handler_installed = false;
 }
 
 failure_services::~failure_services()
@@ -17,6 +20,12 @@ failure_services& failure_services::get()
 {
 	static failure_services shared_instance;
 	return shared_instance;
+}
+
+void failure_services::install_sigint_handler(std::function<void(void)> a_handler)
+{
+	sigint_handler = a_handler;
+	sigint_handler_installed = true;
 }
 
 void failure_services::install_signal_handler()
@@ -41,8 +50,17 @@ void failure_services::install_signal_handler()
 	m_handler_installed = true;
 }
 
+void failure_services::invoke_sigint_handler()
+{
+	sigint_handler();
+}
+
 void failure_services::handle_signal(int signo)
 {
+	if ((signo == SIGINT) && sigint_handler_installed) {
+		sigint_handler();
+		return;
+	}
 	std::cout << std::endl << std::endl;
 	std::cout << "Caught signal " << signal_map.at(signo) << std::endl << std::endl;
 	std::cout << "Stacktrace: " << std::endl << std::stacktrace::current() << std::endl;
