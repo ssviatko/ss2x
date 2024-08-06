@@ -546,6 +546,13 @@ int main(int argc, char **argv)
 	
 	// failure services
 	ss::failure_services& l_fs = ss::failure_services::get();
+	l_fs.install_signal_handler();
+	std::cout << "press control-C or you will get a SIGSEGV" << std::endl;
+	for (int i = 0; i < 250; ++i)
+		std::this_thread::sleep_for(std::chrono::milliseconds(20));
+	char *crash;
+	crash = 0;
+	*crash = 0;
 	
 	return 0;
 }

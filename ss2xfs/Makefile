@@ -4,7 +4,7 @@ UNAME := $(shell uname)
 CC := gcc
 CPP := g++
 LD := g++
-LDFLAGS = -lpthread -Wl,-rpath=/usr/local/lib64 -shared -Wl,-soname,libss2xfs.so.1 -rdynamic
+LDFLAGS = -lpthread -L/usr/local/lib64 -lstdc++exp -Wl,-rpath=/usr/local/lib64 -shared -Wl,-soname,libss2xfs.so.1 -rdynamic
 
 OBJS = fs.o
 
