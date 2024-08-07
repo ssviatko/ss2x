@@ -71,7 +71,7 @@ void threadfunc(std::string myname)
 		std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		ctx.log(std::format("hello from inside thread {}", i));
 	}
-	ctx.log_p(ss::log::WARNING, "thread is exiting");
+	ctx.log_p(ss::log::INFO, "thread is exiting");
 	ctx.unregister_thread();
 }
 
@@ -90,6 +90,10 @@ int main(int argc, char **argv)
 	std::shared_ptr<ss::log::target_stdout> l_stdout =
 		std::make_shared<ss::log::target_stdout>(ss::log::DEBUG, ss::log::target_stdout::DEFAULT_FORMATTER_DEBUGINFO);
 	ctx.add_target(l_stdout, "default");
+	
+	std::shared_ptr<ss::log::target_syslog> l_syslog =
+		std::make_shared<ss::log::target_syslog>(ss::log::INFO, ss::log::target_syslog::DEFAULT_FORMATTER, "ss2x");
+	ctx.add_target(l_syslog, "syslog");
 	
 	// set systemwide default log priority
 	ctx.set_p(ss::log::DEBUG);
@@ -111,7 +115,7 @@ int main(int argc, char **argv)
 	l_stdout->set_enable_color(true);
 	ctx.log("spin up a file logger to ss2x.log");
 	std::shared_ptr<ss::log::target_file> l_file = std::make_shared<ss::log::target_file>("ss2x.log", ss::log::DEBUG, ss::log::target_file::DEFAULT_FORMATTER_DEBUGINFO);
-	ctx.add_target(l_file, "logfile");
+	ctx.add_target(l_file, "filetest");
 	std::thread t1(&threadfunc, "t1");
 	std::thread t2(&threadfunc, "t2");
 	t1.join();
@@ -121,10 +125,10 @@ int main(int argc, char **argv)
 //	ctx.log_p(ss::log::NOTICE, std::format("Log messages with {}C {}O {}L {}O {}R {}S {} are neat!", ss::COLOR_LIGHTRED, ss::COLOR_LIGHTYELLOW, ss::COLOR_LIGHTGREEN, ss::COLOR_GREEN, ss::COLOR_LIGHTBLUE, ss::COLOR_LIGHTMAGENTA, ss::COLOR_DEFAULT));
 
 // do this instead
-	ctx.log_p(ss::log::NOTICE, "Log messages with %%COLORLIGHTRED%%C %%COLORLIGHTYELLOW%%O %%COLORLIGHTGREEN%%L %%COLORGREEN%%O %%COLORLIGHTBLUE%%R %%COLORLIGHTMAGENTA%%S %%COLORDEFAULT%% are neat!");
+	ctx.log_p(ss::log::WARNING, "Log messages with %%COLORLIGHTRED%%C %%COLORLIGHTYELLOW%%O %%COLORLIGHTGREEN%%L %%COLORGREEN%%O %%COLORLIGHTBLUE%%R %%COLORLIGHTMAGENTA%%S %%COLORDEFAULT%% are neat!");
 
 	ctx.log("discontinuing logfile...");
-	ctx.remove_target("logfile");
+	ctx.remove_target("filetest");
 	l_file.reset(); // delete and invalidate shared pointer
 	
 	// test ICR

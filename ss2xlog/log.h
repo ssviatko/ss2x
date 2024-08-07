@@ -12,6 +12,8 @@
 #include <source_location>
 #include <fstream>
 
+#include <syslog.h>
+
 #include "doubletime.h"
 
 namespace ss {
@@ -72,6 +74,7 @@ const std::unordered_map<std::string, std::string> color_tokens = {
 class target_base {
 public:
 	target_base(prio_t a_threshold, std::string a_format);
+	virtual ~target_base();
 	void accept_logtext(std::string a_line, std::string a_thread_name, const std::source_location& a_location);
 	void accept_logtext_p(prio_t a_priority, std::string a_line, std::string a_thread_name, const std::source_location& a_location);
 	virtual void post_logtext(std::string& a_formatted_message) = 0;
@@ -104,6 +107,15 @@ public:
 
 protected:
 	std::ofstream m_logfile;
+};
+
+class target_syslog : public target_base {
+public:
+	target_syslog(prio_t a_threshold, std::string a_format, const char *a_ident);
+	virtual ~target_syslog();
+	virtual void post_logtext(std::string& a_formatted_message);
+	const static std::string DEFAULT_FORMATTER;
+	const static std::string DEFAULT_FORMATTER_DEBUGINFO;
 };
 
 class ctx {

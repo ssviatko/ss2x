@@ -15,6 +15,11 @@ target_base::target_base(prio_t a_threshold, std::string a_format)
 	
 }
 
+target_base::~target_base()
+{
+	
+}
+
 void target_base::set_p(prio_t a_priority)
 {
 	m_priority = a_priority;
@@ -94,17 +99,38 @@ const std::string target_stdout::DEFAULT_FORMATTER_DEBUGINFO = "[%%COLORGREEN%%%
 target_stdout::target_stdout(prio_t a_threshold, std::string a_format)
 : target_base(a_threshold, a_format)
 {
-	
 }
 
 target_stdout::~target_stdout()
 {
-	
+
 }
 
 void target_stdout::post_logtext(std::string& a_formatted_message)
 {
 	std::cout << a_formatted_message << std::endl;
+}
+
+// syslog
+
+const std::string target_syslog::DEFAULT_FORMATTER = "[%%thread%%] %%message%%";
+const std::string target_syslog::DEFAULT_FORMATTER_DEBUGINFO = "[%%thread%%] [%%file%%/%%line%% %%function%%] %%message%%";
+
+target_syslog::target_syslog(prio_t a_threshold, std::string a_format, const char *a_ident)
+: target_base(a_threshold, a_format)
+{
+	set_enable_color(false);
+	openlog(a_ident, LOG_PID | LOG_CONS | LOG_NDELAY, LOG_USER);
+}
+
+target_syslog::~target_syslog()
+{
+	closelog();
+}
+
+void target_syslog::post_logtext(std::string& a_formatted_message)
+{
+	syslog(m_priority, "%s", a_formatted_message.c_str());
 }
 
 // file
