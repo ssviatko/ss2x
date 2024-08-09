@@ -33,7 +33,7 @@ int main(int argc, char **argv)
 	std::cout << "starting manager..." << std::endl;
 	m.start();
 	std::cout << "sleeping..." << std::endl;
-	std::this_thread::sleep_for(std::chrono::seconds(2));
+	std::this_thread::sleep_for(std::chrono::seconds(1));
 	std::cout << "stopping manager..." << std::endl;
 	m.halt();
 	return 0;
