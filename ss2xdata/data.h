@@ -148,10 +148,12 @@ public:
 	void set_write_cursor_to_append();
 	void set_read_cursor(std::size_t a_read_cursor);
 	void set_network_byte_order(bool a_setting) { m_network_byte_order = a_setting; };
+	void set_circular_mode(bool a_setting) { m_circular_mode = a_setting; };
 	
 	std::size_t get_write_cursor() { return m_write_cursor; };
 	std::size_t get_read_cursor() { return m_read_cursor; };
 	bool get_network_byte_order() { return m_network_byte_order; };
+	bool get_circular_mode() { return m_circular_mode; };
 	std::size_t size() const;
 
 	/* utilities */
@@ -160,6 +162,7 @@ public:
 	void random(std::size_t a_num_bytes);
 	void clear();
 	void truncate_back(std::size_t a_new_len);
+	void truncate_front(std::size_t a_trunc_len);
 	void assign(std::uint8_t *a_buffer, std::size_t a_len);
 	bool compare(const data& a_data) const; // true = same, false = different
 	void append_data(const data& a_data);
@@ -290,6 +293,7 @@ public:
 	
 protected:
 	bool m_network_byte_order;
+	bool m_circular_mode;
 	std::size_t m_read_cursor;
 	std::size_t m_write_cursor;
 	bit_cursor m_read_bit_cursor;

@@ -38,6 +38,7 @@ std::uint64_t data::bit_cursor::get_absolute()
 
 data::data()
 : m_network_byte_order(false)
+, m_circular_mode(false)
 , m_read_cursor(0)
 , m_write_cursor(0)
 , m_delimiter(0xa)
@@ -64,6 +65,7 @@ data::data(data&& a_data)
 void data::copy_construct(const data& a_data)
 {
 	m_network_byte_order = a_data.m_network_byte_order;
+	m_circular_mode = a_data.m_circular_mode;
 	m_read_cursor = a_data.m_read_cursor;
 	m_write_cursor = a_data.m_write_cursor;
 	m_delimiter = a_data.m_delimiter;
@@ -163,7 +165,8 @@ void data::write_std_str_delim(const std::string& a_str)
 std::optional<std::string> data::read_std_str_delim()
 {
 	std::vector<std::uint8_t>::iterator l_begin = m_buffer.begin();
-	std::advance(l_begin, m_read_cursor);
+	if (!m_circular_mode)
+		std::advance(l_begin, m_read_cursor);
 	auto l_delim_pos = std::find(l_begin, m_buffer.end(), m_delimiter);
 	if (l_delim_pos == m_buffer.end()) {
 		return std::nullopt;
@@ -171,30 +174,47 @@ std::optional<std::string> data::read_std_str_delim()
 		std::vector<std::uint8_t> l_work;
 		std::copy(l_begin, l_delim_pos, std::back_inserter(l_work));
 		std::string l_ret((char *)(l_work.data()), l_work.size());
-		m_read_cursor += l_work.size() + 1;
+		if (m_circular_mode)
+			truncate_front(l_work.size() + 1);
+		else
+			m_read_cursor += l_work.size() + 1;
 		return l_ret;
 	}
 }
 
 std::vector<std::uint8_t> data::read_raw_data(std::size_t a_num_bytes)
 {
-	if (m_read_cursor + a_num_bytes > m_buffer.size()) {
-		data_exception e("attempt to read past end of buffer.");
-		throw (e);
-	}
-	
 	std::vector<std::uint8_t> l_ret;
-	std::vector<std::uint8_t>::iterator l_begin = m_buffer.begin();
-	std::advance(l_begin, m_read_cursor);
-	std::vector<std::uint8_t>::iterator l_end = l_begin;
-	std::advance(l_end, a_num_bytes);
-	std::copy(l_begin, l_end, std::back_inserter(l_ret));
-	m_read_cursor += a_num_bytes;
+	if (m_circular_mode) {
+		// if number of bytes requested exceeds buffer size, error
+		if (a_num_bytes > m_buffer.size()) {
+			data_exception e("attempt circular mode read larger than buffer size.");
+			throw (e);
+		}
+		std::vector<std::uint8_t>::iterator l_final = m_buffer.begin();
+		std::advance(l_final, a_num_bytes);
+		std::copy(m_buffer.begin(), l_final, std::back_inserter(l_ret));
+		truncate_front(a_num_bytes);
+	} else {
+		// normal mode read
+		if (m_read_cursor + a_num_bytes > m_buffer.size()) {
+			data_exception e("attempt to read past end of buffer.");
+			throw (e);
+		}
+		std::vector<std::uint8_t>::iterator l_begin = m_buffer.begin();
+		std::advance(l_begin, m_read_cursor);
+		std::vector<std::uint8_t>::iterator l_end = l_begin;
+		std::advance(l_end, a_num_bytes);
+		std::copy(l_begin, l_end, std::back_inserter(l_ret));
+		m_read_cursor += a_num_bytes;
+	}
 	return l_ret;
 }
 
 void data::write_raw_data(const std::vector<std::uint8_t>& a_vector)
 {
+	if (m_circular_mode)
+		set_write_cursor_to_append();
 	// add space to vector if we're overwriting the end
 	if (m_write_cursor + a_vector.size() > m_buffer.size()) {
 		// empty vector of appropriate size
@@ -261,6 +281,28 @@ void data::truncate_back(std::size_t a_new_len)
 	}
 }
 
+void data::truncate_front(std::size_t a_trunc_len)
+{
+	// if truncation length exceeds size of buffer, this is an error!
+	if (a_trunc_len > m_buffer.size()) {
+		data_exception e("truncate_front: truncation length exceeds buffer size.");
+		throw (e);
+	}
+	std::vector<std::uint8_t>::iterator l_new_front = m_buffer.begin();
+	std::advance(l_new_front, a_trunc_len);
+	m_buffer.erase(m_buffer.begin(), l_new_front);
+	// correct cursors
+	if (m_read_cursor <= a_trunc_len)
+		m_read_cursor = 0;
+	else
+		m_read_cursor -= a_trunc_len;
+	if (m_write_cursor <= a_trunc_len)
+		m_write_cursor = 0;
+	else
+		m_write_cursor -= a_trunc_len;
+	// leave the bit cursors alone - beware! Don't use bit read/write routines in circular mode.
+}
+
 void data::assign(std::uint8_t *a_buffer, std::size_t a_len)
 {
 	for (size_t i = 0; i < a_len; ++i) {
@@ -279,6 +321,7 @@ bool data::compare(const data& a_data) const
 
 void data::append_data(const data& a_data)
 {
+	set_write_cursor_to_append();
 	write_raw_data(a_data.m_buffer);
 }
 

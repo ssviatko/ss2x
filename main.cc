@@ -13,6 +13,8 @@
 #include "data.h"
 #include "fs.h"
 
+#define FILE_COMPRESS 1
+
 typedef struct {
 	std::uint64_t key;
 	std::uint64_t clear;
@@ -371,25 +373,27 @@ int main(int argc, char **argv)
 	ctx.log(rle_man1_enc.as_hex_str_nospace());
 	ctx.log(rle_man1_dec.as_hex_str_nospace());
 	
-	for (const auto& l_file : std::filesystem::recursive_directory_iterator(".")) {
-		if ((l_file.is_regular_file()) && (!(l_file.is_symlink()))) {
-			ss::data ht;
-			ht.load_file(l_file.path());
-			//	ht.set_huffman_debug(true);
-			ss::data ht_comp = ht.huffman_encode();
-			//	ctx.log(ht_comp.as_hex_str());
-			ss::data ht_decomp = ht_comp.huffman_decode();
-			ctx.log(std::format("{} ht len: {} ht_comp len: {} ht_decomp len: {} ratio: {:.5}% check: {}", std::string(l_file.path()), ht.size(), ht_comp.size(), ht_decomp.size(), ((float)ht_comp.size() / (float)ht.size()) * 100.0, (ht_decomp == ht)));
-			ss::data rle;
-			rle.load_file(l_file.path());
-			ss::data rle_comp = rle.rle_encode();
-			ss::data rle_decomp = rle_comp.rle_decode();
-			ctx.log(std::format("{} rle len: {} rle_comp len: {} rle_decomp len: {} ratio: {:.5}% check: {}", std::string(l_file.path()), rle.size(), rle_comp.size(), rle_decomp.size(), ((float)rle_comp.size() / (float)rle.size()) * 100.0, (rle_decomp == rle)));
-			ss::data ranger;
-			ranger.load_file(l_file.path());
-			ss::data ranger_comp = ranger.range_encode();
-			ss::data ranger_decomp = ranger_comp.range_decode();
-			ctx.log(std::format("{} ranger len: {} ranger_comp len: {} ranger_decomp len: {} ratio: {:.5}% check: {}", std::string(l_file.path()), ranger.size(), ranger_comp.size(), ranger_decomp.size(), ((float)ranger_comp.size() / (float)ranger.size()) * 100.0, (ranger_decomp == ranger)));
+	if (FILE_COMPRESS) {
+		for (const auto& l_file : std::filesystem::recursive_directory_iterator(".")) {
+			if ((l_file.is_regular_file()) && (!(l_file.is_symlink()))) {
+				ss::data ht;
+				ht.load_file(l_file.path());
+				//	ht.set_huffman_debug(true);
+				ss::data ht_comp = ht.huffman_encode();
+				//	ctx.log(ht_comp.as_hex_str());
+				ss::data ht_decomp = ht_comp.huffman_decode();
+				ctx.log(std::format("{} ht len: {} ht_comp len: {} ht_decomp len: {} ratio: {:.5}% check: {}", std::string(l_file.path()), ht.size(), ht_comp.size(), ht_decomp.size(), ((float)ht_comp.size() / (float)ht.size()) * 100.0, (ht_decomp == ht)));
+				ss::data rle;
+				rle.load_file(l_file.path());
+				ss::data rle_comp = rle.rle_encode();
+				ss::data rle_decomp = rle_comp.rle_decode();
+				ctx.log(std::format("{} rle len: {} rle_comp len: {} rle_decomp len: {} ratio: {:.5}% check: {}", std::string(l_file.path()), rle.size(), rle_comp.size(), rle_decomp.size(), ((float)rle_comp.size() / (float)rle.size()) * 100.0, (rle_decomp == rle)));
+				ss::data ranger;
+				ranger.load_file(l_file.path());
+				ss::data ranger_comp = ranger.range_encode();
+				ss::data ranger_decomp = ranger_comp.range_decode();
+				ctx.log(std::format("{} ranger len: {} ranger_comp len: {} ranger_decomp len: {} ratio: {:.5}% check: {}", std::string(l_file.path()), ranger.size(), ranger_comp.size(), ranger_decomp.size(), ((float)ranger_comp.size() / (float)ranger.size()) * 100.0, (ranger_decomp == ranger)));
+			}
 		}
 	}
 	
@@ -547,6 +551,20 @@ int main(int argc, char **argv)
 	ctx.log(std::format("zulu  format printing of dth {:Z}", dth));
 	dth.delta_time_long_doubletime(65.0L * 60.0L);
 	ctx.log(std::format("dth 65 minutes in future: {} reached it yet? {}", dth, dth.yet()));
+	
+	// data circular mode
+	ss::data circle;
+	circle.set_circular_mode(true);
+	circle.write_std_str_delim("Peter");
+	circle.write_std_str_delim("peter");
+	circle.write_std_str_delim("purple pumpkin");
+	circle.write_std_str_delim("eater!!!");
+	for (int i = 0; i < 4; ++i) {
+		ctx.log(std::format("read a couple of characters: {}", circle.read_int16()));
+		std::string l_strread = circle.read_std_str_delim().value_or("none");
+		ctx.log(std::format("circular mode: read string {}", l_strread));
+		ctx.log(std::format("circle is now {} in length.", circle.size()));
+	}
 	
 	// failure services
 	auto ctrlc = []() {
