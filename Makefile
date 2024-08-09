@@ -9,7 +9,7 @@ UNAME = $(shell uname)
 CC = gcc
 CPP = g++
 LD = g++
-LDFLAGS = -Wl,-rpath,. -Wl,-rpath=/usr/local/lib64 -L. -lpthread -lss2xlog -lss2xicr -lss2xdata -lss2xfs
+LDFLAGS = -Wl,-rpath,. -Wl,-rpath=/usr/local/lib64 -L. -lpthread -lss2xlog -lss2xicr -lss2xdata -lss2xfs -lss2xccl
 TARGET = ss2x
 OBJS = main.o
 
@@ -43,6 +43,12 @@ $(TARGET): $(OBJS)
 	rm -f libss2xfs.so
 	ln -s libss2xfs.so.1.0.0 libss2xfs.so.1
 	ln -s libss2xfs.so.1.0.0 libss2xfs.so
+	$(MAKE) -C ss2xccl/ all
+	cp ss2xccl/libss2xccl.so.1.0.0 .
+	rm -f libss2xccl.so.1
+	rm -f libss2xccl.so
+	ln -s libss2xccl.so.1.0.0 libss2xccl.so.1
+	ln -s libss2xccl.so.1.0.0 libss2xccl.so
 	$(LD) $(OBJS) -o $(TARGET) $(LDFLAGS)
 
 %.o: %.c
@@ -63,4 +69,6 @@ clean:
 	rm -f libss2xdata.so*
 	$(MAKE) -C ss2xfs/ clean
 	rm -f libss2xfs.so*
+	$(MAKE) -C ss2xccl/ clean
+	rm -f libss2xccl.so*
 	
