@@ -13,11 +13,14 @@
 #include <map>
 #include <stack>
 #include <exception>
+#include <array>
 #include <bit>
 #include <algorithm>
 #include <random>
 #include <optional>
+#include <functional>
 
+#include <climits>
 #include <cstdint>
 
 #include <memory.h>
@@ -86,6 +89,12 @@ class data {
 	static std::uint8_t *base64_decode(const std::string a_str, std::size_t *decode_len);
 	
 	void copy_construct(const data& a_data);
+
+	// private ranger routines
+	void assign_ranges(std::uint64_t a_lo, std::uint64_t a_hi);
+	static void default_predicate(std::uint64_t a_num, std::uint64_t a_denom);
+	ss::data range_encode_private(ss::data& a_data, std::function<void(std::uint64_t, std::uint64_t)> a_status_cb = default_predicate);
+	ss::data range_decode_private(ss::data& a_data, std::function<void(std::uint64_t, std::uint64_t)> a_status_cb = default_predicate);
 
 public:
 
@@ -276,6 +285,8 @@ public:
 	void set_huffman_debug(bool a_debug) { m_huffman_debug = a_debug; };
 	data rle_encode() const;
 	data rle_decode() const;
+	data range_encode(std::function<void(std::uint64_t, std::uint64_t)> a_status_cb = default_predicate);
+	data range_decode(std::function<void(std::uint64_t, std::uint64_t)> a_status_cb = default_predicate);
 	
 protected:
 	bool m_network_byte_order;

@@ -362,18 +362,6 @@ int main(int argc, char **argv)
 	ss::data htrep_decomp = htrep_comp.huffman_decode();
 	ctx.log(std::format("decoded 500 length repeating character file, len={} check {}", htrep_decomp.size(), (htrep_decomp == htrep)));
 
-	for (const auto& l_file : std::filesystem::recursive_directory_iterator(".")) {
-		if ((l_file.is_regular_file()) && (!(l_file.is_symlink()))) {
-			ss::data ht;
-			ht.load_file(l_file.path());
-			//	ht.set_huffman_debug(true);
-			ss::data ht_comp = ht.huffman_encode();
-			//	ctx.log(ht_comp.as_hex_str());
-			ss::data ht_decomp = ht_comp.huffman_decode();
-			ctx.log(std::format("{} ht len: {} ht_comp len: {} ht_decomp len: {} ratio: {:.5}% check: {}", std::string(l_file.path()), ht.size(), ht_comp.size(), ht_decomp.size(), ((float)ht_comp.size() / (float)ht.size()) * 100.0, (ht_decomp == ht)));
-		}
-	}
-	
 	// test RLE function
 	ss::data rle_man1;
 	rle_man1.write_hex_str("a1a2a3a4a5a5a5a5a5a5a5818283ffffffffffff0010");
@@ -385,11 +373,23 @@ int main(int argc, char **argv)
 	
 	for (const auto& l_file : std::filesystem::recursive_directory_iterator(".")) {
 		if ((l_file.is_regular_file()) && (!(l_file.is_symlink()))) {
+			ss::data ht;
+			ht.load_file(l_file.path());
+			//	ht.set_huffman_debug(true);
+			ss::data ht_comp = ht.huffman_encode();
+			//	ctx.log(ht_comp.as_hex_str());
+			ss::data ht_decomp = ht_comp.huffman_decode();
+			ctx.log(std::format("{} ht len: {} ht_comp len: {} ht_decomp len: {} ratio: {:.5}% check: {}", std::string(l_file.path()), ht.size(), ht_comp.size(), ht_decomp.size(), ((float)ht_comp.size() / (float)ht.size()) * 100.0, (ht_decomp == ht)));
 			ss::data rle;
 			rle.load_file(l_file.path());
 			ss::data rle_comp = rle.rle_encode();
 			ss::data rle_decomp = rle_comp.rle_decode();
 			ctx.log(std::format("{} rle len: {} rle_comp len: {} rle_decomp len: {} ratio: {:.5}% check: {}", std::string(l_file.path()), rle.size(), rle_comp.size(), rle_decomp.size(), ((float)rle_comp.size() / (float)rle.size()) * 100.0, (rle_decomp == rle)));
+			ss::data ranger;
+			ranger.load_file(l_file.path());
+			ss::data ranger_comp = ranger.range_encode();
+			ss::data ranger_decomp = ranger_comp.range_decode();
+			ctx.log(std::format("{} ranger len: {} ranger_comp len: {} ranger_decomp len: {} ratio: {:.5}% check: {}", std::string(l_file.path()), ranger.size(), ranger_comp.size(), ranger_decomp.size(), ((float)ranger_comp.size() / (float)ranger.size()) * 100.0, (ranger_decomp == ranger)));
 		}
 	}
 	
