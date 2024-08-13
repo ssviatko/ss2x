@@ -53,4 +53,5 @@ clean:
 	$(MAKE) -C libss2x/ clean
 	rm -f libss2x.so*
 	rm dispatchable_test
+	rm thread_test
 	
