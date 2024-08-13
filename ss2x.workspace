@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeLite_Workspace Name="ss2x" Database="" Version="10000">
+  <Project Name="libss2x" Path="libss2x/libss2x.project" Active="Yes"/>
+  <Project Name="ss2x-test" Path="ss2x-test.project"/>
+  <BuildMatrix>
+    <WorkspaceConfiguration Name="Debug" Selected="yes">
+      <Environment/>
+      <Project Name="libss2x" ConfigName="Debug"/>
+      <Project Name="ss2x-test" ConfigName="Debug"/>
+    </WorkspaceConfiguration>
+    <WorkspaceConfiguration Name="Release" Selected="yes">
+      <Environment/>
+      <Project Name="libss2x" ConfigName="Release"/>
+      <Project Name="ss2x-test" ConfigName="Release"/>
+    </WorkspaceConfiguration>
+  </BuildMatrix>
+</CodeLite_Workspace>

@@ -13,7 +13,10 @@ LDFLAGS = -Wl,-rpath,. -Wl,-rpath=/usr/local/lib64 -L. -lpthread -lss2x -lstdc++
 TARGET = ss2x
 OBJS = main.o
 
-all: $(TARGET)
+DT_OBJS = dispatchable_test.o
+DT_TARGET = dispatchable_test
+
+all: $(TARGET) $(DT_TARGET)
 
 $(TARGET): $(OBJS)
 
@@ -27,6 +30,10 @@ $(TARGET): $(OBJS)
 	ln -s libss2x.so.1.0.0 libss2x.so
 	$(LD) $(OBJS) -o $(TARGET) $(LDFLAGS)
 
+$(DT_TARGET): $(DT_OBJS)
+
+	$(LD) $(DT_OBJS) -o $(DT_TARGET) $(LDFLAGS)
+
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
 
@@ -39,4 +46,5 @@ clean:
 	rm -f $(TARGET)
 	$(MAKE) -C libss2x/ clean
 	rm -f libss2x.so*
+	rm dispatchable_test
 	
