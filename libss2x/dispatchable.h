@@ -17,6 +17,10 @@ public:
 	void halt();
 	void snooze();
 	virtual bool dispatch() = 0;
+	virtual void starting();
+	virtual void started();
+	virtual void halting();
+	virtual void halted();
 	
 protected:
 	void dispatch_core();

@@ -8,6 +8,10 @@ public:
 	manager();
 	virtual ~manager();
 	virtual bool dispatch();
+	virtual void starting();
+	virtual void started();
+	virtual void halting();
+	virtual void halted();
 };
 
 manager::manager()
@@ -17,6 +21,26 @@ manager::manager()
 
 manager::~manager()
 {
+}
+
+void manager::starting()
+{
+	std::cout << "Manager start request received..." << std::endl;
+}
+
+void manager::started()
+{
+	std::cout << "Manager started." << std::endl;
+}
+
+void manager::halting()
+{
+	std::cout << "Manager halt request received...." << std::endl;
+}
+
+void manager::halted()
+{
+	std::cout << "Manager halted." << std::endl;
 }
 
 bool manager::dispatch()

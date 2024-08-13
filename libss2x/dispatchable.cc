@@ -18,17 +18,37 @@ void dispatchable::start()
 {
 	// start dispatch thread
 	m_dispatch_running = true;
+	starting();
 	std::thread l_dispatch_thr(&dispatchable::dispatch_core, this);
 	m_dispatchthr_started.acquire();
 	l_dispatch_thr.detach();
+	started();
 }
 
 void dispatchable::halt()
 {
 	if (m_dispatch_running) {
+		halting();
 		m_dispatch_running = false;
 		m_dispatchthr_stopped.acquire();
+		halted();
 	}
+}
+
+void dispatchable::starting()
+{
+}
+
+void dispatchable::started()
+{
+}
+
+void dispatchable::halting()
+{
+}
+
+void dispatchable::halted()
+{
 }
 
 void dispatchable::dispatch_core()
