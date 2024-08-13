@@ -15,8 +15,10 @@ OBJS = main.o
 
 DT_OBJS = dispatchable_test.o
 DT_TARGET = dispatchable_test
+TT_OBJS = thread_test.o
+TT_TARGET = thread_test
 
-all: $(TARGET) $(DT_TARGET)
+all: $(TARGET) $(DT_TARGET) $(TT_TARGET)
 
 $(TARGET): $(OBJS)
 
@@ -33,6 +35,10 @@ $(TARGET): $(OBJS)
 $(DT_TARGET): $(DT_OBJS)
 
 	$(LD) $(DT_OBJS) -o $(DT_TARGET) $(LDFLAGS)
+	
+$(TT_TARGET): $(TT_OBJS)
+
+	$(LD) $(TT_OBJS) -o $(TT_TARGET) $(LDFLAGS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="ss2x-test" Version="11000" InternalType="">
   <VirtualDirectory Name="ss2x-test">
+    <File Name="thread_test.cc"/>
     <File Name="dispatchable_test.cc"/>
     <File Name="main.cc"/>
     <File Name="Makefile"/>
