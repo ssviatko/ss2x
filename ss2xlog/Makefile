@@ -1,4 +1,4 @@
-CFLAGS = -Wall -fPIC -O3 -std=c++23
+CFLAGS = -Wall -g -fPIC -O3 -std=c++23
 
 UNAME := $(shell uname)
 CC := gcc

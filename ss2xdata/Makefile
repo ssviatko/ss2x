@@ -1,4 +1,4 @@
-CFLAGS = -Wall -fPIC -O3
+CFLAGS = -Wall -g -fPIC -O3
 CCFLAGS = -Wall -Wno-maybe-uninitialized -fPIC -O3 -std=c++23
 
 UNAME := $(shell uname)
