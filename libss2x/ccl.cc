@@ -41,6 +41,20 @@ void thread::execute_core()
 	ctx.unregister_thread();
 }
 
+void thread::trigger()
+{
+	m_trigger.release();
+}
+
+bool thread::wait_for_trigger()
+{
+	while (!m_trigger.try_acquire_for(std::chrono::milliseconds(10))) {
+		if (m_stop_requested)
+			return false;
+	}
+	return true;
+}
+
 } // namespace ccl
 } // namespace ss
 

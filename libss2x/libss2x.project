@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="libss2x" Version="11000" InternalType="">
   <VirtualDirectory Name="libss2x">
+    <File Name="nd.h"/>
+    <File Name="nd.cc"/>
     <File Name="bf.cc"/>
     <File Name="bf.h"/>
     <File Name="ccl.cc"/>

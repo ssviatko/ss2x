@@ -6,6 +6,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <semaphore>
 #include <atomic>
 #include <chrono>
 #include <optional>
@@ -26,6 +27,8 @@ public:
 	void request_stop();
 	bool is_stop_requested();
 	void join();
+	void trigger();
+	bool wait_for_trigger();
 
 protected:
 	std::thread m_thread;
@@ -33,6 +36,7 @@ protected:
 	std::atomic<bool> m_stop_requested;
 	ss::log::ctx& ctx = ss::log::ctx::get();
 	void snooze();
+	std::binary_semaphore m_trigger { 0 };
 };
 
 // ss::ccl::work_queue

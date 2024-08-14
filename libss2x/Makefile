@@ -6,8 +6,7 @@ CPP := g++
 LD := g++
 LDFLAGS = -lpthread -Wl,-rpath=/usr/local/lib64 -shared -Wl,-soname,libss2x.so.1 -rdynamic -lstdc++exp
 
-OBJS = ccl.o dispatchable.o bf.o data.o md5.o sha1.o sha2.o fs.o icr.o log.o doubletime.o
-DOBJS = dispatchable_test.o ccl.o dispatchable.o
+OBJS = ccl.o dispatchable.o bf.o data.o md5.o sha1.o sha2.o fs.o icr.o log.o doubletime.o nd.o
 
 all: libss2x
 

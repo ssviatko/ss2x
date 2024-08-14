@@ -17,8 +17,10 @@ DT_OBJS = dispatchable_test.o
 DT_TARGET = dispatchable_test
 TT_OBJS = thread_test.o
 TT_TARGET = thread_test
+ND_OBJS = nd_test.o
+ND_TARGET = nd_test
 
-all: $(TARGET) $(DT_TARGET) $(TT_TARGET)
+all: $(TARGET) $(DT_TARGET) $(TT_TARGET) $(ND_TARGET)
 
 $(TARGET): $(OBJS)
 
@@ -39,6 +41,10 @@ $(DT_TARGET): $(DT_OBJS)
 $(TT_TARGET): $(TT_OBJS)
 
 	$(LD) $(TT_OBJS) -o $(TT_TARGET) $(LDFLAGS)
+	
+$(ND_TARGET): $(ND_OBJS)
+
+	$(LD) $(ND_OBJS) -o $(ND_TARGET) $(LDFLAGS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
@@ -54,4 +60,6 @@ clean:
 	rm -f libss2x.so*
 	rm dispatchable_test
 	rm thread_test
+	rm nd_test
+	
 	
