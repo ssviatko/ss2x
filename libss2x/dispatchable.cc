@@ -3,15 +3,16 @@
 namespace ss {
 namespace ccl {
 
-dispatchable::dispatchable()
+dispatchable::dispatchable(const std::string& a_logname)
 : m_dispatch_running(false)
+, m_thread_name(a_logname)
 {
 	
 }
 
 dispatchable::~dispatchable()
 {
-	
+	halt();
 }
 
 void dispatchable::start()
@@ -53,6 +54,8 @@ void dispatchable::halted()
 
 void dispatchable::dispatch_core()
 {
+	ctx.register_thread(m_thread_name);
+	
 	m_dispatchthr_started.release();
 	
 	while (m_dispatch_running) {
