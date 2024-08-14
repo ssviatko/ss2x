@@ -36,9 +36,8 @@ void thread::snooze()
 
 void thread::execute_core()
 {
-	ss::log::ctx& ctx = ss::log::ctx::get();
 	ctx.register_thread(m_thread_name);
-	execute(ctx);
+	execute();
 	ctx.unregister_thread();
 }
 
