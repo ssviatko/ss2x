@@ -66,7 +66,13 @@ int main(int argc, char **argv)
 	
 	// test note dispatcher
 	ss::ccl::nd& nd = ss::ccl::nd::get();
-	std::this_thread::sleep_for(std::chrono::milliseconds(300));
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	ctx.log(std::format("posted note {}", nd.post(ss::ccl::note::SYS_DEFAULT)));
+	ss::ccl::note_attributes nta;
+	nta.set_keyvalue("apple", "red");
+	nta.set_keyvalue("banana", "blue");
+	ctx.log(std::format("posted note {}", nd.post(ss::ccl::note::SYS_DEFAULT, nta)));
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	nd.shutdown();
 	
 	return 0;

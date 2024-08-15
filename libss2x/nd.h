@@ -6,6 +6,8 @@
 #include <condition_variable>
 #include <atomic>
 #include <chrono>
+#include <optional>
+#include <map>
 
 #include "log.h"
 #include "data.h"
@@ -15,6 +17,21 @@
 
 namespace ss {
 namespace ccl {
+
+// note attributes
+
+class note_attributes {
+public:
+	note_attributes() {}
+	~note_attributes() {}
+	std::size_t size() const { return m_attribdb.size(); }
+	void set_keyvalue(const std::string& a_key, const std::string& a_value);
+	
+protected:
+	std::map<std::string, std::string> m_attribdb;
+};
+
+const note_attributes empty_attributes = ss::ccl::note_attributes();
 
 // note class
 
@@ -50,12 +67,14 @@ public:
 	void set_reply_requested() { m_reply_requested = true; }
 	void set_replied() { m_replied = true; m_replied_cond.notify_all(); }
 	void set_reply(const std::string& a_reply);
+	void set_attributes(const note_attributes& a_attrib);
 	
 	bool delivered() const { return m_delivered; }
 	bool seen() const { return m_seen; }
 	bool reply_requested() const { return m_reply_requested; }
 	bool replied() const { return m_replied; }
 	std::string reply();
+	note_attributes attributes();
 	
 	bool wait_for_delivered(std::size_t a_timeout_ms);
 	bool wait_for_seen(std::size_t a_timeout_ms);
@@ -76,6 +95,8 @@ protected:
 	std::atomic<bool> m_replied;
 	std::mutex m_replied_mutex;
 	std::condition_variable m_replied_cond;
+	note_attributes m_attributes;
+	std::mutex m_attributes_mutex;
 };
 
 // nd (note dispatcher)
@@ -93,6 +114,12 @@ public:
 	void shutdown();
 	virtual void halting();
 	virtual void halted();
+	
+	std::string post(const std::string& a_note_name, ss::ccl::note_attributes a_attributes = ss::ccl::empty_attributes);
+	
+protected:
+	ss::ccl::work_queue<ss::ccl::note> m_post_queue;
+	std::map<std::string, ss::ccl::note> m_notedb;
 };
 
 } // namespace ccl

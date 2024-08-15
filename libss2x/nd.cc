@@ -3,6 +3,13 @@
 namespace ss {
 namespace ccl {
 
+/* note_attributes */
+
+void note_attributes::set_keyvalue(const std::string& a_key, const std::string& a_value)
+{
+	m_attribdb.insert(std::pair<std::string, std::string>(a_key, a_value));
+}
+
 /* note */
 
 note::note()
@@ -65,6 +72,9 @@ void note::copy_construct(const note& a_other_note)
 	m_seen = a_other_note.m_seen.load();
 	m_reply_requested = a_other_note.m_reply_requested.load();
 	m_replied = a_other_note.m_replied.load();
+	m_attributes_mutex.lock();
+	m_attributes = a_other_note.m_attributes;
+	m_attributes_mutex.unlock();
 }
 
 void note::set_reply(const std::string& a_reply)
@@ -74,10 +84,22 @@ void note::set_reply(const std::string& a_reply)
 	set_replied();
 }
 
+void note::set_attributes(const note_attributes& a_attrib)
+{
+	std::lock_guard<std::mutex> l_guard(m_attributes_mutex);
+	m_attributes = a_attrib;
+}
+
 std::string note::reply()
 {
 	std::lock_guard<std::mutex> l_guard(m_reply_name_mutex);
 	return m_reply_name;
+}
+
+note_attributes note::attributes()
+{
+	std::lock_guard<std::mutex> l_guard(m_attributes_mutex);
+	return m_attributes;
 }
 
 bool note::wait_for_delivered(std::size_t a_timeout_ms)
@@ -162,9 +184,22 @@ void nd::halted()
 
 bool nd::dispatch()
 {
-	snooze();
-	ctx.log("nd::dispatch: doing nothing and loving it");
+	ctx.log("dispatch: waiting for note");
+	std::optional<ss::ccl::note> l_note = m_post_queue.wait_for_item(20);
+	if (!l_note.has_value())
+		return true;
+	ctx.log(std::format("dispatch: got note name={} guid={} attribs={}", l_note.value().name(), l_note.value().guid(), l_note.value().attributes().size()));
+	std::string l_guid = l_note.value().guid();
+	m_notedb.insert(std::pair<std::string, ss::ccl::note>(l_guid, l_note.value()));
 	return true;
+}
+
+std::string nd::post(const std::string& a_note_name, ss::ccl::note_attributes a_attributes)
+{
+	ss::ccl::note l_new_note(a_note_name);
+	l_new_note.set_attributes(a_attributes);
+	m_post_queue.add_work_item(l_new_note);
+	return l_new_note.guid();
 }
 
 } // namespace ccl
