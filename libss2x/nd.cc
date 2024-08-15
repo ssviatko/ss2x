@@ -10,6 +10,13 @@ void note_attributes::set_keyvalue(const std::string& a_key, const std::string& 
 	m_attribdb.insert(std::pair<std::string, std::string>(a_key, a_value));
 }
 
+std::string note_attributes::keyvalue(const std::string& a_key)
+{
+	std::string l_ret;
+	l_ret = m_attribdb.at(a_key);
+	return l_ret;
+}
+
 /* note */
 
 note::note()
@@ -188,9 +195,14 @@ bool nd::dispatch()
 	std::optional<ss::ccl::note> l_note = m_post_queue.wait_for_item(20);
 	if (!l_note.has_value())
 		return true;
-	ctx.log(std::format("dispatch: got note name={} guid={} attribs={}", l_note.value().name(), l_note.value().guid(), l_note.value().attributes().size()));
-	std::string l_guid = l_note.value().guid();
-	m_notedb.insert(std::pair<std::string, ss::ccl::note>(l_guid, l_note.value()));
+	ss::ccl::note l_work = l_note.value();
+	ctx.log(std::format("dispatch: got note name={} guid={} attribs={}", l_work.name(), l_work.guid(), l_work.attributes().size()));
+	note_attributes l_attrib = l_work.attributes();
+	for (const auto& [ key, value ] : l_attrib.keymap()) {
+		ctx.log(std::format("key={} value={}", key, value));
+	}
+	std::string l_guid = l_work.guid();
+	m_notedb.insert(std::pair<std::string, ss::ccl::note>(l_guid, l_work));
 	return true;
 }
 

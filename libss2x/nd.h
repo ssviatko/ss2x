@@ -26,6 +26,8 @@ public:
 	~note_attributes() {}
 	std::size_t size() const { return m_attribdb.size(); }
 	void set_keyvalue(const std::string& a_key, const std::string& a_value);
+	std::string keyvalue(const std::string& a_key);
+	std::map<std::string, std::string>& keymap() { return m_attribdb; }
 	
 protected:
 	std::map<std::string, std::string> m_attribdb;
