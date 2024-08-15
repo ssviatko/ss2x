@@ -104,14 +104,14 @@ protected:
 
 // nd agent
 
-class nd_agent : public ss::ccl::work_queue_thread<std::string> {	
+class nd_agent : public ss::ccl::work_queue_thread<std::shared_ptr<ss::ccl::note> > {	
 public:
-	nd_agent(const std::string& a_logname, ss::ccl::work_queue<std::string>& a_queue)
-		: ss::ccl::work_queue_thread<std::string>(a_logname, a_queue) { }
+	nd_agent(const std::string& a_logname, ss::ccl::work_queue<std::shared_ptr<ss::ccl::note> >& a_queue)
+		: ss::ccl::work_queue_thread<std::shared_ptr<ss::ccl::note> >(a_logname, a_queue) { }
 	nd_agent(const nd_agent& a_agent) = delete;
 	nd_agent(nd_agent&& a_agent) = delete;
 	~nd_agent();
-	void dispatch(std::string a_work_item);
+	void dispatch(std::shared_ptr<ss::ccl::note> a_work_item);
 };
 
 // nd (note dispatcher)
@@ -132,14 +132,11 @@ public:
 	static nd& get();
 	void shutdown();
 	
-	std::string post(const std::string& a_note_name, bool a_reply, ss::ccl::note_attributes a_attributes = ss::ccl::empty_attributes);
-	void dispose(const std::string a_guid);
+	std::shared_ptr<ss::ccl::note> post(const std::string& a_note_name, bool a_reply, ss::ccl::note_attributes a_attributes = ss::ccl::empty_attributes);
 	
 protected:
-	ss::ccl::work_queue<ss::ccl::note> m_post_queue;
-	std::map<std::string, ss::ccl::note> m_notedb;
-	std::mutex m_notedb_mutex;
-	ss::ccl::work_queue<std::string> m_call_queue;
+	ss::ccl::work_queue<std::shared_ptr<ss::ccl::note> > m_post_queue;
+	ss::ccl::work_queue<std::shared_ptr<ss::ccl::note> > m_call_queue;
 	std::vector<std::shared_ptr<nd_agent> > m_agents;
 };
 

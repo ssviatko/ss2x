@@ -67,16 +67,14 @@ int main(int argc, char **argv)
 	// test note dispatcher
 	ss::ccl::nd& nd = ss::ccl::nd::get();
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	std::string l_n2_guid = nd.post(ss::ccl::note::SYS_DEFAULT, false);
-	ctx.log(std::format("posted note {}", l_n2_guid));
+	std::shared_ptr<ss::ccl::note> l_n2 = nd.post(ss::ccl::note::SYS_DEFAULT, false);
+	ctx.log(std::format("posted note {}", l_n2->guid()));
 	ss::ccl::note_attributes nta;
 	nta.set_keyvalue("apple", "red");
 	nta.set_keyvalue("banana", "blue");
-	std::string l_n3_guid = nd.post(ss::ccl::note::SYS_DEFAULT, true, nta);
-	ctx.log(std::format("posted note {}", l_n3_guid));
+	std::shared_ptr<ss::ccl::note> l_n3 = nd.post(ss::ccl::note::SYS_DEFAULT, true, nta);
+	ctx.log(std::format("posted note {}", l_n3->guid()));
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	nd.dispose(l_n2_guid);
-	nd.dispose(l_n3_guid);
 	nd.shutdown();
 	
 	return 0;
