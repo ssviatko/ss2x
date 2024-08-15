@@ -27,7 +27,7 @@ note::note()
 , m_reply_requested(false)
 , m_replied(false)
 {
-	m_guid.random(16);
+	m_guid.random(12);
 }
 
 note::note(const std::string& a_note_name)
@@ -38,7 +38,7 @@ note::note(const std::string& a_note_name)
 , m_reply_requested(false)
 , m_replied(false)
 {
-	m_guid.random(16);
+	m_guid.random(12);
 }
 
 note::note(const note& a_note)
@@ -203,7 +203,7 @@ void nd::shutdown()
 
 void nd::halting()
 {
-	ctx.log("note dipatcher: halt request received....");
+	ctx.log("note dispatcher: halt request received....");
 }
 
 void nd::halted()
