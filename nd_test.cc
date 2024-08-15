@@ -64,5 +64,10 @@ int main(int argc, char **argv)
 	nthr.request_stop();
 	nthr.join();
 	
+	// test note dispatcher
+	ss::ccl::nd& nd = ss::ccl::nd::get();
+	std::this_thread::sleep_for(std::chrono::milliseconds(300));
+	nd.shutdown();
+	
 	return 0;
 }

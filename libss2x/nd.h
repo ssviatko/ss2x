@@ -11,9 +11,12 @@
 #include "data.h"
 #include "doubletime.h"
 #include "ccl.h"
+#include "dispatchable.h"
 
 namespace ss {
 namespace ccl {
+
+// note class
 
 class note {
 	void copy_construct(const note& a_other_note);
@@ -73,6 +76,23 @@ protected:
 	std::atomic<bool> m_replied;
 	std::mutex m_replied_mutex;
 	std::condition_variable m_replied_cond;
+};
+
+// nd (note dispatcher)
+
+class nd : public ss::ccl::dispatchable {
+	// singleton pattern - constructors are hidden
+	nd();
+	~nd();
+	
+public:
+	static nd& get();
+	virtual bool dispatch();
+	virtual void starting();
+	virtual void started();
+	void shutdown();
+	virtual void halting();
+	virtual void halted();
 };
 
 } // namespace ccl

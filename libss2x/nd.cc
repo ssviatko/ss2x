@@ -3,6 +3,8 @@
 namespace ss {
 namespace ccl {
 
+/* note */
+
 note::note()
 : m_note_name("none")
 , m_reply_name("none")
@@ -111,6 +113,57 @@ bool note::wait_for_replied(std::size_t a_timeout_ms)
 		l_ul.unlock();
 		return false;
 	}
+	return true;
+}
+
+/* nd (note dispatcher) */
+
+nd::nd()
+: ss::ccl::dispatchable("nd")
+{
+	start();
+}
+
+nd::~nd()
+{
+	shutdown();
+}
+
+nd& nd::get()
+{
+	static nd shared_instance;
+	return shared_instance;
+}
+
+void nd::starting()
+{
+	ctx.log("note dispatcher: start request received...");
+}
+
+void nd::started()
+{
+	ctx.log("note dispatcher started.");
+}
+
+void nd::shutdown()
+{
+	halt();
+}
+
+void nd::halting()
+{
+	ctx.log("note dipatcher: halt request received....");
+}
+
+void nd::halted()
+{
+	ctx.log("note dispatcher: halted.");
+}
+
+bool nd::dispatch()
+{
+	snooze();
+	ctx.log("nd::dispatch: doing nothing and loving it");
 	return true;
 }
 
