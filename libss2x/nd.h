@@ -8,6 +8,7 @@
 #include <chrono>
 #include <optional>
 #include <map>
+#include <memory>
 
 #include "log.h"
 #include "data.h"
@@ -101,27 +102,45 @@ protected:
 	std::mutex m_attributes_mutex;
 };
 
+// nd agent
+
+class nd_agent : public ss::ccl::work_queue_thread<std::string> {	
+public:
+	nd_agent(const std::string& a_logname, ss::ccl::work_queue<std::string>& a_queue)
+		: ss::ccl::work_queue_thread<std::string>(a_logname, a_queue) { }
+	nd_agent(const nd_agent& a_agent) = delete;
+	nd_agent(nd_agent&& a_agent) = delete;
+	~nd_agent();
+	void dispatch(std::string a_work_item);
+};
+
 // nd (note dispatcher)
 
 class nd : public ss::ccl::dispatchable {
 	// singleton pattern - constructors are hidden
 	nd();
 	~nd();
+	virtual void starting();
+	virtual void started();
+	virtual void halting();
+	virtual void halted();
+	virtual bool dispatch();
+	
+	const std::size_t AGENTS = 8;
 	
 public:
 	static nd& get();
-	virtual bool dispatch();
-	virtual void starting();
-	virtual void started();
 	void shutdown();
-	virtual void halting();
-	virtual void halted();
 	
-	std::string post(const std::string& a_note_name, ss::ccl::note_attributes a_attributes = ss::ccl::empty_attributes);
+	std::string post(const std::string& a_note_name, bool a_reply, ss::ccl::note_attributes a_attributes = ss::ccl::empty_attributes);
+	void dispose(const std::string a_guid);
 	
 protected:
 	ss::ccl::work_queue<ss::ccl::note> m_post_queue;
 	std::map<std::string, ss::ccl::note> m_notedb;
+	std::mutex m_notedb_mutex;
+	ss::ccl::work_queue<std::string> m_call_queue;
+	std::vector<std::shared_ptr<nd_agent> > m_agents;
 };
 
 } // namespace ccl

@@ -145,17 +145,35 @@ bool note::wait_for_replied(std::size_t a_timeout_ms)
 	return true;
 }
 
+/* nd_agent */
+
+void nd_agent::dispatch(std::string a_work_item)
+{
+	ctx.log(std::format("queue_worker: got string {}", a_work_item));
+	std::this_thread::sleep_for(std::chrono::milliseconds(500));
+}
+
+nd_agent::~nd_agent()
+{
+}
+
 /* nd (note dispatcher) */
 
 nd::nd()
 : ss::ccl::dispatchable("nd")
 {
 	start();
+	for (std::size_t i = 0; i < AGENTS; ++i) {
+		std::stringstream l_name;
+		l_name << "nd_agent_" << i;
+		std::shared_ptr<nd_agent> l_agent = std::make_shared<nd_agent>(l_name.str(), m_call_queue);
+		l_agent->start();
+		m_agents.push_back(l_agent);
+	}
 }
 
 nd::~nd()
 {
-	shutdown();
 }
 
 nd& nd::get()
@@ -177,6 +195,10 @@ void nd::started()
 void nd::shutdown()
 {
 	halt();
+	m_call_queue.shut_down();
+	for (const auto& i : m_agents) {
+		i->join();
+	}
 }
 
 void nd::halting()
@@ -203,15 +225,26 @@ bool nd::dispatch()
 	}
 	std::string l_guid = l_work.guid();
 	m_notedb.insert(std::pair<std::string, ss::ccl::note>(l_guid, l_work));
+	m_call_queue.add_work_item(l_guid);
 	return true;
 }
 
-std::string nd::post(const std::string& a_note_name, ss::ccl::note_attributes a_attributes)
+std::string nd::post(const std::string& a_note_name, bool a_reply, ss::ccl::note_attributes a_attributes)
 {
+	std::lock_guard<std::mutex> l_guard(m_notedb_mutex);
 	ss::ccl::note l_new_note(a_note_name);
+	if (a_reply)
+		l_new_note.set_reply_requested();
 	l_new_note.set_attributes(a_attributes);
 	m_post_queue.add_work_item(l_new_note);
 	return l_new_note.guid();
+}
+
+void nd::dispose(const std::string a_guid)
+{
+	std::lock_guard<std::mutex> l_guard(m_notedb_mutex);
+	m_notedb.erase(a_guid);
+//	ctx.log(std::format("m_notedb now has {} items.", m_notedb.size()));
 }
 
 } // namespace ccl

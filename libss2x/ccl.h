@@ -19,9 +19,12 @@ namespace ccl {
 
 class thread {
 	void execute_core();
+	void copy_construct(const thread& a_thread);
 	
 public:
 	thread(const std::string& a_logname);
+	thread(const thread& a_thread) = delete;
+	thread(thread&& a_thread) = delete;
 	void start();
 	virtual void execute() = 0;
 	void request_stop();
@@ -169,6 +172,8 @@ template <typename T>
 class work_queue_thread : public ss::ccl::thread {
 public:
 	work_queue_thread(const std::string& a_logname, ss::ccl::work_queue<T>& a_queue);
+	work_queue_thread(const work_queue_thread& a_thread) = delete;
+	work_queue_thread(work_queue_thread&& a_thread) = delete;
 	virtual void execute();
 	virtual void dispatch(T a_work_item) = 0;
 protected:
