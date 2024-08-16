@@ -10,6 +10,7 @@
 #include <map>
 #include <tuple>
 #include <memory>
+#include <algorithm>
 
 #include "log.h"
 #include "data.h"
@@ -139,6 +140,8 @@ public:
 	
 	std::shared_ptr<ss::ccl::note> post(const std::string& a_note_name, bool a_reply, ss::ccl::note_attributes a_attributes = ss::ccl::empty_attributes);
 	void add_listener(const std::string& a_note_name, ss::ccl::note::cb_t a_cb);
+	void remove_listeners_for_note(const std::string& a_note_name);
+	void remove_all_listeners();
 	
 protected:
 	ss::ccl::work_queue<std::shared_ptr<ss::ccl::note> > m_post_queue;

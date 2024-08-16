@@ -250,5 +250,21 @@ void nd::add_listener(const std::string& a_note_name, ss::ccl::note::cb_t a_cb)
 	m_callbacks.insert(std::pair<std::string, ss::ccl::note::cb_t>(a_note_name, a_cb));
 }
 
+void nd::remove_listeners_for_note(const std::string& a_note_name)
+{
+	if (!m_dispatch_running)
+		return;
+	std::lock_guard<std::mutex> l_guard(m_callbacks_mutex);	
+	m_callbacks.erase(a_note_name);
+}
+
+void nd::remove_all_listeners()
+{
+	if (!m_dispatch_running)
+		return;
+	std::lock_guard<std::mutex> l_guard(m_callbacks_mutex);
+	m_callbacks.clear();
+}
+
 } // namespace ccl
 } // namespace ss

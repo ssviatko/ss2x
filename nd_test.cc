@@ -85,9 +85,9 @@ int main(int argc, char **argv)
 	std::shared_ptr<ss::ccl::note> l_n3 = nd.post(ss::ccl::note::SYS_DEFAULT, true, nta);
 	ctx.log(std::format("posted note {}", l_n3->guid()));
 	std::shared_ptr<ss::ccl::note> l_n4 = nd.post(ss::ccl::note::SYS_SPECIAL, false);
-	ctx.log(std::format("posted note {}", l_n2->guid()));
+	ctx.log(std::format("posted note {}", l_n4->guid()));
 	std::shared_ptr<ss::ccl::note> l_n5 = nd.post(ss::ccl::note::SYS_ALTERNATE, false);
-	ctx.log(std::format("posted note {}", l_n2->guid()));
+	ctx.log(std::format("posted note {}", l_n5->guid()));
 
 	auto my_cb_replier = [&ctx](std::shared_ptr<ss::ccl::note> a_note) {
 		ctx.log(std::format("listener replier: got note {} guid {}", a_note->name(), a_note->guid()));
@@ -104,6 +104,11 @@ int main(int argc, char **argv)
 	}
 	ctx.log(std::format("listener for note {} posted reply {}", l_nrep->guid(), l_nrep->reply()));
 
+	nd.remove_listeners_for_note(ss::ccl::note::SYS_DEFAULT);
+	// now nobody will get a SYS_DEFAULT
+	std::shared_ptr<ss::ccl::note> l_n7 = nd.post(ss::ccl::note::SYS_DEFAULT, false);
+	ctx.log(std::format("posted SYS_DEFAULT note {}, listeners should NOT receive it", l_n7->guid()));
+	
 	nd.shutdown();
 	
 	return 0;
