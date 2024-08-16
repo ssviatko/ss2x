@@ -88,6 +88,22 @@ int main(int argc, char **argv)
 	ctx.log(std::format("posted note {}", l_n2->guid()));
 	std::shared_ptr<ss::ccl::note> l_n5 = nd.post(ss::ccl::note::SYS_ALTERNATE, false);
 	ctx.log(std::format("posted note {}", l_n2->guid()));
+
+	auto my_cb_replier = [&ctx](std::shared_ptr<ss::ccl::note> a_note) {
+		ctx.log(std::format("listener replier: got note {} guid {}", a_note->name(), a_note->guid()));
+		if (a_note->reply_requested()) {
+			a_note->set_reply(ss::ccl::note::REPLY_OK);
+		}
+	};
+	
+	nd.add_listener(ss::ccl::note::SYS_REQUEST, my_cb_replier);
+	std::shared_ptr<ss::ccl::note> l_nrep = nd.post(ss::ccl::note::SYS_REQUEST, true);
+	ctx.log(std::format("posted note {} expecting reply", l_nrep->guid()));
+	while (!l_nrep->wait_for_replied(20)) {
+		ctx.log("waiting for reply...");
+	}
+	ctx.log(std::format("listener for note {} posted reply {}", l_nrep->guid(), l_nrep->reply()));
+
 	nd.shutdown();
 	
 	return 0;

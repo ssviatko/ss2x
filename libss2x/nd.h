@@ -49,6 +49,7 @@ public:
 	constexpr const static std::string SYS_DEFAULT = "SYS_DEFAULT";
 	constexpr const static std::string SYS_ALTERNATE = "SYS_ALTERNATE";
 	constexpr const static std::string SYS_SPECIAL = "SYS_SPECIAL";
+	constexpr const static std::string SYS_REQUEST = "SYS_REQUEST";
 	
 	// standard replies
 	constexpr const static std::string REPLY_OK = "REPLY_OK";
