@@ -147,14 +147,10 @@ bool note::wait_for_replied(std::size_t a_timeout_ms)
 
 /* nd_agent */
 
-void nd_agent::dispatch(std::shared_ptr<ss::ccl::note> a_work_item)
+void nd_agent::dispatch(std::tuple<ss::ccl::note::cb_t, std::shared_ptr<ss::ccl::note> > a_work_item)
 {
-	ctx.log(std::format("queue_worker: got string {}", a_work_item->guid()));
-	std::this_thread::sleep_for(std::chrono::milliseconds(500));
-}
-
-nd_agent::~nd_agent()
-{
+	auto [l_cb, l_work] = a_work_item;
+	(l_cb)(l_work);
 }
 
 /* nd (note dispatcher) */
@@ -172,10 +168,6 @@ nd::nd()
 	}
 }
 
-nd::~nd()
-{
-}
-
 nd& nd::get()
 {
 	static nd shared_instance;
@@ -184,7 +176,7 @@ nd& nd::get()
 
 void nd::starting()
 {
-	ctx.log("note dispatcher: start request received...");
+//	ctx.log("note dispatcher: start request received...");
 }
 
 void nd::started()
@@ -203,38 +195,59 @@ void nd::shutdown()
 
 void nd::halting()
 {
-	ctx.log("note dispatcher: halt request received....");
+//	ctx.log("note dispatcher: halt request received....");
 }
 
 void nd::halted()
 {
-	ctx.log("note dispatcher: halted.");
+	ctx.log("note dispatcher halted.");
 }
 
 bool nd::dispatch()
 {
-	ctx.log("dispatch: waiting for note");
+//	ctx.log("dispatch: waiting for note");
 	std::optional<std::shared_ptr<ss::ccl::note> > l_note = m_post_queue.wait_for_item(20);
 	if (!l_note.has_value())
 		return true;
 	std::shared_ptr<ss::ccl::note> l_work = l_note.value();
-	ctx.log(std::format("dispatch: got note name={} guid={} attribs={}", l_work->name(), l_work->guid(), l_work->attributes().size()));
-	note_attributes l_attrib = l_work->attributes();
-	for (const auto& [ key, value ] : l_attrib.keymap()) {
-		ctx.log(std::format("key={} value={}", key, value));
+//	ctx.log(std::format("dispatch: got note name={} guid={} attribs={}", l_work->name(), l_work->guid(), l_work->attributes().size()));
+//	note_attributes l_attrib = l_work->attributes();
+//	for (const auto& [ key, value ] : l_attrib.keymap()) {
+//		ctx.log(std::format("key={} value={}", key, value));
+//	}
+	std::multimap<std::string, ss::ccl::note::cb_t>::iterator m_callbacks_it;
+	std::pair<std::multimap<std::string, ss::ccl::note::cb_t>::iterator, std::multimap<std::string, ss::ccl::note::cb_t>::iterator> l_range;
+	m_callbacks_mutex.lock();
+	l_range = m_callbacks.equal_range(l_work->name());
+//			std::cout << "equal range returned first=" << (void *)&(*l_range.first) << " second=" << (void *)&(*l_range.second) << std::endl;
+	m_callbacks_it = l_range.first;
+	while (m_callbacks_it != l_range.second) {
+		m_call_queue.add_work_item(std::make_tuple(m_callbacks_it->second, l_work));
+		++m_callbacks_it;
 	}
-	m_call_queue.add_work_item(l_work);
+	m_callbacks_mutex.unlock();
 	return true;
 }
 
 std::shared_ptr<note> nd::post(const std::string& a_note_name, bool a_reply, ss::ccl::note_attributes a_attributes)
 {
+	if (!m_dispatch_running)
+		return std::shared_ptr<note>(); // nothing to do if we're already shutting down
 	std::shared_ptr<ss::ccl::note> l_note = std::make_shared<ss::ccl::note>(a_note_name);
 	if (a_reply)
 		l_note->set_reply_requested();
 	l_note->set_attributes(a_attributes);
 	m_post_queue.add_work_item(l_note);
 	return l_note;
+}
+
+void nd::add_listener(const std::string& a_note_name, ss::ccl::note::cb_t a_cb)
+{
+	if (!m_dispatch_running)
+		return; // nothing to do if we're already shutting down
+//	ctx.log(std::format("adding listener for note {}", a_note_name));
+	std::lock_guard<std::mutex> l_guard(m_callbacks_mutex);
+	m_callbacks.insert(std::pair<std::string, ss::ccl::note::cb_t>(a_note_name, a_cb));
 }
 
 } // namespace ccl

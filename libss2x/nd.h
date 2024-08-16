@@ -8,6 +8,7 @@
 #include <chrono>
 #include <optional>
 #include <map>
+#include <tuple>
 #include <memory>
 
 #include "log.h"
@@ -42,9 +43,12 @@ class note {
 	void copy_construct(const note& a_other_note);
 	
 public:
+	typedef std::function<void(std::shared_ptr<ss::ccl::note>)> cb_t;
 
 	// standard note names
 	constexpr const static std::string SYS_DEFAULT = "SYS_DEFAULT";
+	constexpr const static std::string SYS_ALTERNATE = "SYS_ALTERNATE";
+	constexpr const static std::string SYS_SPECIAL = "SYS_SPECIAL";
 	
 	// standard replies
 	constexpr const static std::string REPLY_OK = "REPLY_OK";
@@ -103,15 +107,15 @@ protected:
 };
 
 // nd agent
-
-class nd_agent : public ss::ccl::work_queue_thread<std::shared_ptr<ss::ccl::note> > {	
+ 
+class nd_agent : public ss::ccl::work_queue_thread<std::tuple<ss::ccl::note::cb_t, std::shared_ptr<ss::ccl::note> > > {	
 public:
-	nd_agent(const std::string& a_logname, ss::ccl::work_queue<std::shared_ptr<ss::ccl::note> >& a_queue)
-		: ss::ccl::work_queue_thread<std::shared_ptr<ss::ccl::note> >(a_logname, a_queue) { }
+	nd_agent(const std::string& a_logname, ss::ccl::work_queue<std::tuple<ss::ccl::note::cb_t, std::shared_ptr<ss::ccl::note> > >& a_queue)
+		: ss::ccl::work_queue_thread<std::tuple<ss::ccl::note::cb_t, std::shared_ptr<ss::ccl::note> > >(a_logname, a_queue) { }
+	~nd_agent() { }
 	nd_agent(const nd_agent& a_agent) = delete;
 	nd_agent(nd_agent&& a_agent) = delete;
-	~nd_agent();
-	void dispatch(std::shared_ptr<ss::ccl::note> a_work_item);
+	void dispatch(std::tuple<ss::ccl::note::cb_t, std::shared_ptr<ss::ccl::note> > a_work_item);
 };
 
 // nd (note dispatcher)
@@ -119,7 +123,7 @@ public:
 class nd : public ss::ccl::dispatchable {
 	// singleton pattern - constructors are hidden
 	nd();
-	~nd();
+	~nd() { }
 	virtual void starting();
 	virtual void started();
 	virtual void halting();
@@ -133,11 +137,14 @@ public:
 	void shutdown();
 	
 	std::shared_ptr<ss::ccl::note> post(const std::string& a_note_name, bool a_reply, ss::ccl::note_attributes a_attributes = ss::ccl::empty_attributes);
+	void add_listener(const std::string& a_note_name, ss::ccl::note::cb_t a_cb);
 	
 protected:
 	ss::ccl::work_queue<std::shared_ptr<ss::ccl::note> > m_post_queue;
-	ss::ccl::work_queue<std::shared_ptr<ss::ccl::note> > m_call_queue;
+	ss::ccl::work_queue<std::tuple<ss::ccl::note::cb_t, std::shared_ptr<ss::ccl::note> > > m_call_queue;
 	std::vector<std::shared_ptr<nd_agent> > m_agents;
+	std::multimap<std::string, ss::ccl::note::cb_t> m_callbacks;
+	std::mutex m_callbacks_mutex;
 };
 
 } // namespace ccl

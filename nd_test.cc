@@ -64,9 +64,19 @@ int main(int argc, char **argv)
 	nthr.request_stop();
 	nthr.join();
 	
+	auto my_cb1 = [&ctx](std::shared_ptr<ss::ccl::note> a_note) {
+		ctx.log(std::format("listener1: got note {} guid {}", a_note->name(), a_note->guid()));
+	};
+	auto my_cb2 = [&ctx](std::shared_ptr<ss::ccl::note> a_note) {
+		ctx.log(std::format("listener2: got note {} guid {}", a_note->name(), a_note->guid()));
+	};
+	
 	// test note dispatcher
 	ss::ccl::nd& nd = ss::ccl::nd::get();
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	nd.add_listener(ss::ccl::note::SYS_DEFAULT, my_cb1);
+	nd.add_listener(ss::ccl::note::SYS_SPECIAL, my_cb1);
+	nd.add_listener(ss::ccl::note::SYS_DEFAULT, my_cb2);
+	nd.add_listener(ss::ccl::note::SYS_ALTERNATE, my_cb2);
 	std::shared_ptr<ss::ccl::note> l_n2 = nd.post(ss::ccl::note::SYS_DEFAULT, false);
 	ctx.log(std::format("posted note {}", l_n2->guid()));
 	ss::ccl::note_attributes nta;
@@ -74,7 +84,10 @@ int main(int argc, char **argv)
 	nta.set_keyvalue("banana", "blue");
 	std::shared_ptr<ss::ccl::note> l_n3 = nd.post(ss::ccl::note::SYS_DEFAULT, true, nta);
 	ctx.log(std::format("posted note {}", l_n3->guid()));
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	std::shared_ptr<ss::ccl::note> l_n4 = nd.post(ss::ccl::note::SYS_SPECIAL, false);
+	ctx.log(std::format("posted note {}", l_n2->guid()));
+	std::shared_ptr<ss::ccl::note> l_n5 = nd.post(ss::ccl::note::SYS_ALTERNATE, false);
+	ctx.log(std::format("posted note {}", l_n2->guid()));
 	nd.shutdown();
 	
 	return 0;
