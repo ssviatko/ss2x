@@ -387,6 +387,19 @@ long double doubletime::now_as_long_double()
 	return (long double)l_now;
 }
 
+std::string doubletime::now_as_file_stamp()
+{
+	doubletime l_now;
+	std::stringstream l_stamp;
+	l_stamp << std::setfill('0') << std::setw(4) << l_now.local_year();
+	l_stamp << std::setfill('0') << std::setw(2) << l_now.local_month();
+	l_stamp << std::setfill('0') << std::setw(2) << l_now.local_day();
+	l_stamp << std::setfill('0') << std::setw(2) << l_now.local_hour();
+	l_stamp << std::setfill('0') << std::setw(2) << l_now.local_minute();
+	l_stamp << std::setfill('0') << std::setw(2) << l_now.local_second();
+	return l_stamp.str();
+}
+
 // printing and formatting
 
 std::ostream& operator<<(std::ostream &os, doubletime& a_dt)

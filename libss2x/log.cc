@@ -140,6 +140,8 @@ const std::string target_file::DEFAULT_FORMATTER_DEBUGINFO = "[%%iso8601%%] [%%p
 
 target_file::target_file(const std::string a_filename, prio_t a_threshold, std::string a_format)
 : target_base(a_threshold, a_format)
+, m_logfile_name(a_filename)
+, m_rotator_enabled(false)
 {
 	set_enable_color(false);
 	m_logfile.open(a_filename.c_str(), std::ios::app | std::ios::ate);
@@ -154,9 +156,40 @@ target_file::~target_file()
 	m_logfile.close();
 }
 
+void target_file::set_enable_rotator(const std::uint64_t a_max_size)
+{
+	m_rotator_max_size = a_max_size;
+	m_rotator_enabled = true;
+}
+
 void target_file::post_logtext(std::string& a_formatted_message)
 {
 	m_logfile << a_formatted_message << std::endl;
+	m_logfile.flush();
+	if (m_rotator_enabled) {
+		std::filesystem::path l_file(m_logfile_name);
+		if (std::filesystem::file_size(l_file) > m_rotator_max_size) {
+			ss::failure_services& l_fs = ss::failure_services::get();
+			l_fs.temporarily_ignore_signals();
+			m_logfile.close();
+			std::stringstream l_arc;
+			l_arc << "tar -czf " << m_logfile_name << "-" << doubletime::now_as_file_stamp() << ".tar.gz " << m_logfile_name;
+			int l_tar = std::system(l_arc.str().c_str());
+			if (l_tar != 0) {
+				std::stringstream l_error;
+				l_error << "ss::log::target_file: unable to archive log file, tar returned " << l_tar;
+				throw std::runtime_error(l_error.str());
+			}
+			if (!(std::filesystem::remove(m_logfile_name))) {
+				throw std::runtime_error("ss::log::target_file: can't delete log file after archiving");
+			}
+			m_logfile.open(m_logfile_name.c_str(), std::ios::app | std::ios::ate);
+			if (!m_logfile.is_open()) {
+				throw std::runtime_error("ss::log::target_file: Unable to reopen log file.");
+			}
+			l_fs.unignore_signals();
+		}
+	}
 }
 
 // log context

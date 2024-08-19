@@ -7,6 +7,7 @@ std::function<void(void)> failure_services::sigint_handler;
 
 failure_services::failure_services()
 : m_handler_installed(false)
+, m_ignoring_signals(false)
 {
 	sigint_handler_installed = false;
 }
@@ -26,6 +27,25 @@ void failure_services::install_sigint_handler(std::function<void(void)> a_handle
 {
 	sigint_handler = a_handler;
 	sigint_handler_installed = true;
+}
+
+void failure_services::temporarily_ignore_signals()
+{
+	// ignore SIGINT and SIGHUP temporarily during a critical routine
+	if (m_handler_installed) {
+		m_ignoring_signals = true;
+		signal(SIGINT, SIG_IGN);
+		signal(SIGHUP, SIG_IGN);
+	}
+}
+
+void failure_services::unignore_signals()
+{
+	if (m_handler_installed) {
+		signal(SIGINT, SIG_DFL);
+		signal(SIGHUP, SIG_DFL);
+		m_ignoring_signals = false;
+	}
 }
 
 void failure_services::install_signal_handler()

@@ -40,9 +40,12 @@ public:
 	void install_signal_handler();
 	void install_sigint_handler(std::function<void(void)> a_handler);
 	void invoke_sigint_handler();
+	void temporarily_ignore_signals();
+	void unignore_signals();
 	
 protected:
 	bool m_handler_installed;
+	bool m_ignoring_signals;
 	
 	// SIGINT stuff
 	static bool sigint_handler_installed;

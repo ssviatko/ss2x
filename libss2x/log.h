@@ -11,10 +11,12 @@
 #include <format>
 #include <source_location>
 #include <fstream>
+#include <filesystem>
 
 #include <syslog.h>
 
 #include "doubletime.h"
+#include "fs.h"
 
 namespace ss {
 
@@ -101,12 +103,16 @@ class target_file : public target_base {
 public:
 	target_file(const std::string a_filename, prio_t a_threshold, std::string a_format);
 	virtual ~target_file();
+	void set_enable_rotator(const std::uint64_t a_max_size);
 	virtual void post_logtext(std::string& a_formatted_message);
 	const static std::string DEFAULT_FORMATTER;
 	const static std::string DEFAULT_FORMATTER_DEBUGINFO;
 
 protected:
 	std::ofstream m_logfile;
+	std::string m_logfile_name;
+	std::atomic<bool> m_rotator_enabled;
+	std::atomic<std::uint64_t> m_rotator_max_size;
 };
 
 class target_syslog : public target_base {

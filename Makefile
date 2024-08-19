@@ -21,8 +21,10 @@ ND_OBJS = nd_test.o
 ND_TARGET = nd_test
 JSON_OBJS = json_test.o
 JSON_TARGET = json_test
+ROT_OBJS = rotator_test.o
+ROT_TARGET = rotator_test
 
-all: $(TARGET) $(DT_TARGET) $(TT_TARGET) $(ND_TARGET) $(JSON_TARGET)
+all: $(TARGET) $(DT_TARGET) $(TT_TARGET) $(ND_TARGET) $(JSON_TARGET) $(ROT_TARGET)
 
 $(TARGET): $(OBJS)
 
@@ -51,6 +53,10 @@ $(ND_TARGET): $(ND_OBJS)
 $(JSON_TARGET): $(JSON_OBJS)
 
 	$(LD) $(JSON_OBJS) -o $(JSON_TARGET) $(LDFLAGS)
+
+$(ROT_TARGET): $(ROT_OBJS)
+
+	$(LD) $(ROT_OBJS) -o $(ROT_TARGET) $(LDFLAGS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<

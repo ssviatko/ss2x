@@ -107,6 +107,7 @@ public:
 	static std::int64_t now_as_epoch_seconds();
 	static double now_as_double();
 	static long double now_as_long_double();
+	static std::string now_as_file_stamp();
 	
 	// printing and formatting
 	friend std::ostream& operator<<(std::ostream &os, doubletime& a_dt); // local
