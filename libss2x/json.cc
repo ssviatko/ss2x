@@ -589,10 +589,86 @@ std::shared_ptr<master> parse_json(const std::string& a_json)
 	return l_ret;
 }
 
-std::string make_json(master& a_master)
+/* serializer */
+
+json_serializable::json_serializable(const std::string& a_object_name, element_type a_type)
+: m_object_name(a_object_name)
+, m_type(a_type)
 {
-	std::string l_ret;
-	return l_ret;
+}
+
+json_serializable::~json_serializable()
+{
+	
+}
+
+std::string json_serializable::master_object_enclose(const std::string& a_json)
+{
+	return "{ " + a_json + " }";
+}
+
+std::string json_serializable::serialize()
+{
+	std::stringstream l_ret;
+	if (m_type == ss::json::element_type::OBJECT) {
+		l_ret << "\"" << object_name() << "\" : { ";
+		l_ret << seal();
+		l_ret << " }";
+	} else if (m_type == ss::json::element_type::ARRAY) {
+		l_ret << "[ ";
+		l_ret << seal();
+		l_ret << " ]";
+	}
+	return l_ret.str();
+}
+
+std::string json_serializable::stringvalue_number(const std::string& a_name, int a_num)
+{
+	std::stringstream l_ret;
+	l_ret << "\"" << a_name << "\" : " << a_num;
+	return l_ret.str();
+}
+
+std::string json_serializable::stringvalue_number(const std::string& a_name, double a_num)
+{
+	std::stringstream l_ret;
+	l_ret << "\"" << a_name << "\" : " << a_num;
+	return l_ret.str();
+}
+
+std::string json_serializable::stringvalue_string(const std::string& a_name, const std::string& a_string)
+{
+	std::stringstream l_ret;
+	l_ret << "\"" << a_name << "\" : \"" << a_string << "\"";
+	return l_ret.str();
+}
+
+std::string json_serializable::stringvalue_array(json_serializable& a_ser)
+{
+	std::stringstream l_ret;
+	l_ret << "\"" << a_ser.object_name() << "\" : " << a_ser.serialize();
+	return l_ret.str();
+}
+
+std::string json_serializable::value_number(int a_num)
+{
+	std::stringstream l_ret;
+	l_ret << a_num;
+	return l_ret.str();
+}
+
+std::string json_serializable::value_number(double a_num)
+{
+	std::stringstream l_ret;
+	l_ret << a_num;
+	return l_ret.str();
+}
+
+std::string json_serializable::value_string(const std::string& a_string)
+{
+	std::stringstream l_ret;
+	l_ret << "\"" << a_string << "\"";
+	return l_ret.str();
 }
 
 } // namespace json

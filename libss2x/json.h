@@ -1,6 +1,8 @@
 #ifndef SSJSON_H
 #define SSJSON_H
 
+#include <string>
+
 /*
  * SSJSON
  * 
@@ -8,6 +10,7 @@
  * Good Neighbors LLC
  * 
  * 14/May/2021
+ * updated in August 2024 for ss2x library
  * 
  */
 
@@ -22,9 +25,6 @@
 
 namespace ss {
 namespace json {
-
-//std::string buildno();
-//std::string builddate();
 
 /* elements */
 
@@ -179,7 +179,28 @@ typedef std::shared_ptr<element> element_ptr;
 /* functions */
 
 std::shared_ptr<master> parse_json(const std::string& a_json);
-std::string make_json(master& a_master);
+
+/* json serialization */
+
+class json_serializable {
+public:
+	json_serializable(const std::string& a_object_name, element_type a_type); // OBJECT or ARRAY supported
+	~json_serializable();
+	std::string& object_name() { return m_object_name; }
+	std::string serialize();
+	virtual std::string seal() = 0;
+	static std::string master_object_enclose(const std::string& a_json);
+	std::string stringvalue_number(const std::string& a_name, int a_num);
+	std::string stringvalue_number(const std::string& a_name, double a_num);
+	std::string stringvalue_string(const std::string& a_name, const std::string& a_string);
+	std::string stringvalue_array(json_serializable& a_ser);
+	std::string value_number(int a_num);
+	std::string value_number(double a_num);
+	std::string value_string(const std::string& a_string);
+protected:
+	std::string m_object_name;
+	element_type m_type;
+};
 
 } // namespace json
 } // namespace ss

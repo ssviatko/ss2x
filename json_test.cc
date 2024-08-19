@@ -96,6 +96,74 @@ void display_master(ss::json::master_ptr a_master)
 	}
 }
 
+/* JSON serialization examples */
+
+class json_vector : public std::vector<int>, public ss::json::json_serializable {
+public:
+	json_vector(const std::string& a_name) : ss::json::json_serializable(a_name, ss::json::element_type::ARRAY) { }
+	~json_vector() { }
+	std::string seal();
+};
+
+std::string json_vector::seal()
+{
+	std::string l_ret;
+	std::vector<int>::iterator this_it = this->begin();
+	while (this_it != this->end()) {
+		if (this_it == (this->end() - 1)) {
+			l_ret += value_number(*this_it);
+		} else {
+			l_ret += value_number(*this_it) + ", ";
+		}
+		++this_it;
+	}
+	return l_ret;
+}
+
+class json_a : public ss::json::json_serializable {
+public:
+	json_a(const std::string& a_name) : ss::json::json_serializable(a_name, ss::json::element_type::OBJECT) { vec_a.push_back(111); vec_a.push_back(325); }
+	int int_a;
+	int int_b;
+	std::string string_a;
+	std::string string_b;
+	json_vector vec_a = json_vector("vec_a");
+	std::string seal();
+};
+
+std::string json_a::seal()
+{
+	std::string l_ret = stringvalue_number("int_a", int_a) + ", ";
+	l_ret += stringvalue_number("int_b", int_b) + ", ";
+	l_ret += stringvalue_string("string_a", string_a) + ", ";
+	l_ret += stringvalue_string("string_b", string_b) + ", ";
+	l_ret += stringvalue_array(vec_a);
+	return l_ret;
+}
+
+class json_b : public ss::json::json_serializable {
+public:
+	json_b(const std::string& a_name, json_a& a_jsona_a, json_a& a_jsona_b) : ss::json::json_serializable(a_name, ss::json::element_type::OBJECT),
+		jsona_a(a_jsona_a), jsona_b(a_jsona_b) { }
+	int int_a;
+	double f_a;
+	double f_b;
+	json_a& jsona_a;
+	json_a& jsona_b;
+	std::string seal();
+};
+
+std::string json_b::seal()
+{
+	std::string l_ret;
+	l_ret += stringvalue_number("int_a", int_a) + ", ";
+	l_ret += stringvalue_number("f_a", f_a) + ", ";
+	l_ret += stringvalue_number("f_b", f_b) + ", ",
+	l_ret += jsona_a.serialize() + ", ";
+	l_ret += jsona_b.serialize();
+	return l_ret;
+}
+
 int main(int argc, char **argv)
 {
 	ss::failure_services& fs = ss::failure_services::get();
@@ -122,6 +190,38 @@ int main(int argc, char **argv)
 			}
 		}
 	}
+	
+	// serialize json object graph
+	json_a ja1("ja_1");
+	ja1.int_a = 7;
+	ja1.int_b = 3;
+	ja1.string_a = "foo";
+	ja1.string_b = "fubar";
+	json_a ja2("ja_2");
+	ja2.int_a = 99;
+	ja2.int_b = 44;
+	ja2.string_a = "bohica";
+	ja2.string_b = "pebkac";
+	json_b jb("jb_main", ja1, ja2);
+	jb.int_a = 27;
+	json_b jb2("jb_alt", ja1, ja2);
+	jb2.int_a = 434;
+	
+	std::string l_jb_json = ss::json::json_serializable::master_object_enclose(jb.serialize() + ", " + jb2.serialize());
+	ctx.log(std::format("jb serialized to json is: {}", l_jb_json));
+	ss::json::master_ptr l_jbmaster = ss::json::parse_json(l_jb_json);
+	display_master(l_jbmaster);
+	
+	json_vector jv("jv1");
+	jv.push_back(6);
+	jv.push_back(9);
+	jv.push_back(20);
+	std::string l_jv_json = jv.serialize();
+	ctx.log(std::format("jv serialized to json is: {}", l_jv_json));
+	ss::json::master_ptr l_jvmaster = ss::json::parse_json(l_jv_json);
+	display_master(l_jvmaster);
+	
+	
 	return 0;
 }
 
