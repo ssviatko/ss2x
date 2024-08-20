@@ -179,8 +179,14 @@ typedef std::shared_ptr<element> element_ptr;
 /* functions */
 
 std::shared_ptr<master> parse_json(const std::string& a_json);
+std::string make_human_readable(std::string a_json); // format a JSON string with tabs and linefeeds
 
 /* json serialization */
+
+template <typename T>
+std::string comma_list(const T& a_last) { return a_last; }
+template <typename U, typename... T>
+std::string comma_list(const U& a_first, const T&... a_other) { return a_first + std::string(", ") + comma_list(a_other...); }
 
 class json_serializable {
 public:

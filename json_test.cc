@@ -133,12 +133,11 @@ public:
 
 std::string json_a::seal()
 {
-	std::string l_ret = stringvalue_number("int_a", int_a) + ", ";
-	l_ret += stringvalue_number("int_b", int_b) + ", ";
-	l_ret += stringvalue_string("string_a", string_a) + ", ";
-	l_ret += stringvalue_string("string_b", string_b) + ", ";
-	l_ret += stringvalue_array(vec_a);
-	return l_ret;
+	return ss::json::comma_list(stringvalue_number("int_a", int_a),
+		stringvalue_number("int_b", int_b),
+		stringvalue_string("string_a", string_a),
+		stringvalue_string("string_b", string_b),
+		stringvalue_array(vec_a));
 }
 
 class json_b : public ss::json::json_serializable {
@@ -155,13 +154,11 @@ public:
 
 std::string json_b::seal()
 {
-	std::string l_ret;
-	l_ret += stringvalue_number("int_a", int_a) + ", ";
-	l_ret += stringvalue_number("f_a", f_a) + ", ";
-	l_ret += stringvalue_number("f_b", f_b) + ", ",
-	l_ret += jsona_a.serialize() + ", ";
-	l_ret += jsona_b.serialize();
-	return l_ret;
+	return ss::json::comma_list(stringvalue_number("int_a", int_a),
+		stringvalue_number("f_a", f_a),
+		stringvalue_number("f_b", f_b),
+		jsona_a.serialize(),
+		jsona_b.serialize());
 }
 
 int main(int argc, char **argv)
@@ -208,7 +205,7 @@ int main(int argc, char **argv)
 	jb2.int_a = 434;
 	
 	std::string l_jb_json = ss::json::json_serializable::master_object_enclose(jb.serialize() + ", " + jb2.serialize());
-	ctx.log(std::format("jb serialized to json is: {}", l_jb_json));
+	ctx.log(std::format("jb serialized to json is: {}", ss::json::make_human_readable(l_jb_json)));
 	ss::json::master_ptr l_jbmaster = ss::json::parse_json(l_jb_json);
 	display_master(l_jbmaster);
 	
@@ -217,7 +214,7 @@ int main(int argc, char **argv)
 	jv.push_back(9);
 	jv.push_back(20);
 	std::string l_jv_json = jv.serialize();
-	ctx.log(std::format("jv serialized to json is: {}", l_jv_json));
+	ctx.log(std::format("jv serialized to json is: {}", ss::json::make_human_readable(l_jv_json)));
 	ss::json::master_ptr l_jvmaster = ss::json::parse_json(l_jv_json);
 	display_master(l_jvmaster);
 	

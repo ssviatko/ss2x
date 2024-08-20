@@ -589,6 +589,47 @@ std::shared_ptr<master> parse_json(const std::string& a_json)
 	return l_ret;
 }
 
+std::string make_human_readable(std::string a_json)
+{
+	// assumes a syntactically correct JSON string with no tabs or line breaks as input
+	// tab/return on [ or { character,
+	// reduce tab level + return on ] or } character
+	std::size_t l_tablevel = 0;
+	std::string l_ret;
+	
+	auto embed_tabs = [&]() {
+		for (std::size_t i = 1; i <= l_tablevel; ++i)
+			l_ret += '\t';
+	};
+	
+	l_ret += '\n'; // kick it off with a line break
+	for (const auto& i: a_json) {
+		if ((i == '{') || (i == '[')) {
+			l_ret += i;
+			l_ret += '\n';
+			l_tablevel++;
+			embed_tabs();
+			continue;
+		}
+		if ((i == '}') || (i == ']')) {
+			l_ret += '\n';
+			l_tablevel--;
+			embed_tabs();
+			l_ret += i;
+			continue;
+		}
+		if (i == ',') {
+			l_ret += i;
+			l_ret += '\n';
+			embed_tabs();
+			continue;
+		}
+		l_ret += i;
+	}
+	l_ret += '\n'; // line break at the end for good measure
+	return l_ret;
+}
+
 /* serializer */
 
 json_serializable::json_serializable(const std::string& a_object_name, element_type a_type)
