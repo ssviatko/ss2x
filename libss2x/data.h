@@ -164,6 +164,7 @@ public:
 	void truncate_back(std::size_t a_new_len);
 	void truncate_front(std::size_t a_trunc_len);
 	void assign(std::uint8_t *a_buffer, std::size_t a_len);
+	std::uint8_t *buffer() { return m_buffer.data(); }
 	bool compare(const data& a_data) const; // true = same, false = different
 	void append_data(const data& a_data);
 	
