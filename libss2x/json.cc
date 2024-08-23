@@ -163,6 +163,14 @@ master::~master()
 	
 }
 
+/* casting helpers */
+
+std::shared_ptr<object> as_object(std::shared_ptr<element> a_element) { return std::dynamic_pointer_cast<object>(a_element); }
+std::shared_ptr<array> as_array(std::shared_ptr<element> a_element) { return std::dynamic_pointer_cast<array>(a_element); }
+std::shared_ptr<string> as_string(std::shared_ptr<element> a_element) { return std::dynamic_pointer_cast<string>(a_element); }
+std::shared_ptr<number> as_number(std::shared_ptr<element> a_element) { return std::dynamic_pointer_cast<number>(a_element); }
+std::shared_ptr<constant> as_constant(std::shared_ptr<element> a_element) { return std::dynamic_pointer_cast<constant>(a_element); }
+
 /* parse engine */
 
 parse_engine::parse_engine(const std::string& a_json)
