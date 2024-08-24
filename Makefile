@@ -23,8 +23,10 @@ JSON_OBJS = json_test.o
 JSON_TARGET = json_test
 ROT_OBJS = rotator_test.o
 ROT_TARGET = rotator_test
+BF_TEST_OBJS = bf_test.o
+BF_TEST_TARGET = bf_test
 
-all: $(TARGET) $(DT_TARGET) $(TT_TARGET) $(ND_TARGET) $(JSON_TARGET) $(ROT_TARGET)
+all: $(TARGET) $(DT_TARGET) $(TT_TARGET) $(ND_TARGET) $(JSON_TARGET) $(ROT_TARGET) $(BF_TEST_TARGET)
 
 $(TARGET): $(OBJS)
 
@@ -58,6 +60,10 @@ $(ROT_TARGET): $(ROT_OBJS)
 
 	$(LD) $(ROT_OBJS) -o $(ROT_TARGET) $(LDFLAGS)
 
+$(BF_TEST_TARGET): $(BF_TEST_OBJS)
+
+	$(LD) $(BF_TEST_OBJS) -o $(BF_TEST_TARGET) $(LDFLAGS)
+
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
 
@@ -74,5 +80,6 @@ clean:
 	rm thread_test
 	rm nd_test
 	rm json_test
+	rm bf_test
 	
 	
