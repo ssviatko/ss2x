@@ -293,6 +293,8 @@ public:
 	static data bf7_key_schedule(const std::string& a_string);
 	static data bf7_iv_random();
 	static data bf7_iv_schedule(const std::string& a_string);
+	static data bf7_block_encrypt(data& a_block, data& a_key);
+	static data bf7_block_decrypt(data& a_block, data& a_key);
 
 	/* compression */
 	

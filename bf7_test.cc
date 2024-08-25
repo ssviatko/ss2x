@@ -45,5 +45,12 @@ int main(int argc, char **argv)
 	ss::data bf7_iv3 = ss::data::bf7_iv_schedule("Stephen Sviatko");
 	ctx.log(std::format("scheduled bf7 iv: {}", bf7_iv3.as_hex_str_nospace()));
 	
+	ss::data bf7_block;
+	bf7_block.fill(16, 0);
+	ss::data bf7_block_enc = ss::data::bf7_block_encrypt(bf7_block, bf7_key1);
+	ctx.log(std::format("block {} enc: {}", bf7_block.as_hex_str_nospace(), bf7_block_enc.as_hex_str_nospace()));
+	ss::data bf7_block_dec = ss::data::bf7_block_decrypt(bf7_block_enc, bf7_key1);
+	ctx.log(std::format(" dec: {}", bf7_block_dec.as_hex_str_nospace()));
+	
 	return 0;
 }

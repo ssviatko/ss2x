@@ -1590,6 +1590,97 @@ data data::bf_block_encrypt(data& a_block, data& a_key)
 	return l_ret;
 }
 
+data data::bf7_block_encrypt(data& a_block, data& a_key)
+{
+	// enforce size constraints on block and key
+	if (a_block.size() != 16) {
+		data_exception e("Blowfish7 block must be 16 bytes in length.");
+		throw (e);
+	}
+	if (a_key.size() != 392) {
+		data_exception e("Blowfish7 key must be exactly 392 bytes in length.");
+		throw (e);
+	}
+	
+	// divide key into 7 keys
+	std::vector<data> keys;
+	ss::data l_empty;
+	a_key.set_read_cursor(0);
+	for (std::size_t i = 0; i < 7; ++i) {
+		keys.push_back(l_empty);
+		for (std::size_t j = 0; j < 56; ++j) {
+			keys[i].write_uint8(a_key.read_uint8());
+		}
+	}
+	
+	// debug: print our partial keys
+	for (std::size_t i = 0; i < 7; ++i) {
+		std::cout << std::format("partial key {}: {}", i + 1, keys[i].as_hex_str_nospace()) << std::endl;
+	}
+	
+	std::array<std::uint8_t, 20> l_work;
+	auto show_work = [&]() {
+		std::cout << "work buffer: ";
+		for (std::size_t i = 0; i < 20; ++i) {
+			std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)l_work[i];
+			if (i == 15)
+				std::cout << "-";
+		}
+		std::cout << std::endl;
+	};
+	
+	memcpy(l_work.data(), a_block.buffer(), 16);
+	// wrap around first four bytes on end
+	memcpy(l_work.data() + 16, a_block.buffer(), 4);
+	show_work();
+	
+	ss::bf::block block1((std::uint8_t *)l_work.data(), keys[0].buffer(), 56);
+	block1.encrypt();
+	memcpy(l_work.data(), block1.get_blockdata(), 8);
+	memcpy(l_work.data() + 16, l_work.data(), 4);
+	show_work();
+	
+	ss::bf::block block2((std::uint8_t *)l_work.data() + 4, keys[1].buffer(), 56);
+	block2.encrypt();
+	memcpy(l_work.data() + 4, block2.get_blockdata(), 8);
+	show_work();
+	
+	ss::bf::block block3((std::uint8_t *)l_work.data() + 8, keys[2].buffer(), 56);
+	block3.encrypt();
+	memcpy(l_work.data() + 8, block3.get_blockdata(), 8);
+	show_work();
+	
+	ss::bf::block block4((std::uint8_t *)l_work.data() + 12, keys[3].buffer(), 56);
+	block4.encrypt();
+	memcpy(l_work.data() + 12, block4.get_blockdata(), 8);
+	memcpy(l_work.data(), l_work.data() + 16, 4);
+	show_work();
+	
+	ss::bf::block block5((std::uint8_t *)l_work.data(), keys[4].buffer(), 56);
+	block5.decrypt();
+	memcpy(l_work.data(), block5.get_blockdata(), 8);
+	show_work();
+	
+	ss::bf::block block6((std::uint8_t *)l_work.data() + 8, keys[5].buffer(), 56);
+	block6.decrypt();
+	memcpy(l_work.data() + 8, block6.get_blockdata(), 8);
+	show_work();
+	
+	ss::bf::block block7a((std::uint8_t *)l_work.data(), keys[6].buffer(), 56);
+	ss::bf::block block7b((std::uint8_t *)l_work.data() + 8, keys[6].buffer(), 56);
+	block7a.encrypt();
+	block7b.encrypt();
+	memcpy(l_work.data(), block7a.get_blockdata(), 8);
+	memcpy(l_work.data() + 8, block7b.get_blockdata(), 8);
+	show_work();
+	
+	data l_ret;
+	for (std::size_t i = 0; i < 16; ++i) {
+		l_ret.write_uint8(l_work[i]);
+	}
+	return l_ret;
+}
+
 data data::bf_block_decrypt(data& a_block, data& a_key)
 {
 	// enforce size constraints on block and key
@@ -1607,6 +1698,96 @@ data data::bf_block_decrypt(data& a_block, data& a_key)
 	const std::uint8_t *blockdata = l_work.get_blockdata();
 	for (int i = 0; i < 8; ++i)
 		l_ret.write_uint8(blockdata[i]);
+	return l_ret;
+}
+
+data data::bf7_block_decrypt(data& a_block, data& a_key)
+{
+	// enforce size constraints on block and key
+	if (a_block.size() != 16) {
+		data_exception e("Blowfish7 block must be 16 bytes in length.");
+		throw (e);
+	}
+	if (a_key.size() != 392) {
+		data_exception e("Blowfish7 key must be exactly 392 bytes in length.");
+		throw (e);
+	}
+	
+	// divide key into 7 keys
+	std::vector<data> keys;
+	ss::data l_empty;
+	a_key.set_read_cursor(0);
+	for (std::size_t i = 0; i < 7; ++i) {
+		keys.push_back(l_empty);
+		for (std::size_t j = 0; j < 56; ++j) {
+			keys[i].write_uint8(a_key.read_uint8());
+		}
+	}
+	
+	// debug: print our partial keys
+	for (std::size_t i = 0; i < 7; ++i) {
+		std::cout << std::format("partial key {}: {}", i + 1, keys[i].as_hex_str_nospace()) << std::endl;
+	}
+	
+	std::array<std::uint8_t, 20> l_work;
+	auto show_work = [&]() {
+		std::cout << "work buffer: ";
+		for (std::size_t i = 0; i < 20; ++i) {
+			std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)l_work[i];
+			if (i == 15)
+				std::cout << "-";
+		}
+		std::cout << std::endl;
+	};
+	
+	memcpy(l_work.data(), a_block.buffer(), 16);
+	memset(l_work.data() + 16, 0, 4);
+	show_work();
+	
+	ss::bf::block block7a((std::uint8_t *)l_work.data(), keys[6].buffer(), 56);
+	ss::bf::block block7b((std::uint8_t *)l_work.data() + 8, keys[6].buffer(), 56);
+	block7a.decrypt();
+	block7b.decrypt();
+	memcpy(l_work.data(), block7a.get_blockdata(), 8);
+	memcpy(l_work.data() + 8, block7b.get_blockdata(), 8);
+	show_work();
+	
+	ss::bf::block block6((std::uint8_t *)l_work.data() + 8, keys[5].buffer(), 56);
+	block6.encrypt();
+	memcpy(l_work.data() + 8, block6.get_blockdata(), 8);
+	show_work();
+	
+	ss::bf::block block5((std::uint8_t *)l_work.data(), keys[4].buffer(), 56);
+	block5.encrypt();
+	memcpy(l_work.data(), block5.get_blockdata(), 8);
+	memcpy(l_work.data() + 16, l_work.data(), 4);
+	show_work();
+	
+	ss::bf::block block4((std::uint8_t *)l_work.data() + 12, keys[3].buffer(), 56);
+	block4.decrypt();
+	memcpy(l_work.data() + 12, block4.get_blockdata(), 8);
+	memcpy(l_work.data(), l_work.data() + 16, 4);
+	show_work();
+	
+	ss::bf::block block3((std::uint8_t *)l_work.data() + 8, keys[2].buffer(), 56);
+	block3.decrypt();
+	memcpy(l_work.data() + 8, block3.get_blockdata(), 8);
+	show_work();
+	
+	ss::bf::block block2((std::uint8_t *)l_work.data() + 4, keys[1].buffer(), 56);
+	block2.decrypt();
+	memcpy(l_work.data() + 4, block2.get_blockdata(), 8);
+	show_work();
+	
+	ss::bf::block block1((std::uint8_t *)l_work.data(), keys[0].buffer(), 56);
+	block1.decrypt();
+	memcpy(l_work.data(), block1.get_blockdata(), 8);
+	show_work();
+	
+	data l_ret;
+	for (std::size_t i = 0; i < 16; ++i) {
+		l_ret.write_uint8(l_work[i]);
+	}
 	return l_ret;
 }
 
