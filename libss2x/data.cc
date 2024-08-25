@@ -303,7 +303,7 @@ void data::truncate_front(std::size_t a_trunc_len)
 	// leave the bit cursors alone - beware! Don't use bit read/write routines in circular mode.
 }
 
-void data::assign(std::uint8_t *a_buffer, std::size_t a_len)
+void data::assign(const std::uint8_t *a_buffer, std::size_t a_len)
 {
 	for (size_t i = 0; i < a_len; ++i) {
 		write_uint8(a_buffer[i]);
@@ -1506,6 +1506,24 @@ data data::bf_key_schedule(const std::string& a_string)
 	return l_hash;
 }
 
+data data::bf_iv_random()
+{
+	data l_ret;
+	
+	l_ret.random(8); // random 64 bit Blowfish iv
+	return l_ret;
+}
+
+data data::bf_iv_schedule(const std::string& a_string)
+{
+	// schedule a key by hashing a string
+	data l_work;
+	l_work.write_std_str(a_string);
+	data l_hash = l_work.sha2_512();
+	l_hash.truncate_back(8);
+	return l_hash;
+}
+
 data data::bf_block_encrypt(data& a_block, data& a_key)
 {
 	// enforce size constraints on block and key
@@ -1544,6 +1562,161 @@ data data::bf_block_decrypt(data& a_block, data& a_key)
 	for (int i = 0; i < 8; ++i)
 		l_ret.write_uint8(blockdata[i]);
 	return l_ret;
+}
+
+data data::bf_encrypt_with_cbc(data& a_data, data& a_key, data& a_iv)
+{
+	// sanity check IV
+	if (a_iv.size() != 8) {
+		throw data_exception("initialization vector needs to be same as block size.");
+	}
+	
+	data l_ret;
+	if (a_data.size() == 0) {
+		// just return empty buffer if we were passed zero length data
+		return l_ret;
+	}
+	
+	ss::data l_block;
+	l_block.fill(8, 0);
+	ss::bf::block l_bf(l_block.buffer(), a_key.buffer(), a_key.size());
+	l_bf.set_iv(a_iv.buffer());
+	std::size_t l_pos = 0;
+
+	auto block_clear = [&]() {
+		l_block.set_write_cursor(0);
+		for (std::size_t i = 0; i < 8; ++i)
+			l_block.write_uint8(0);
+		l_block.set_write_cursor(0);
+	};
+	
+	do {
+		std::size_t l_end = l_pos + 8;
+		l_end = (l_end > a_data.size() ? a_data.size() : l_end);
+//		std::cout << "reading from " << l_pos << " to one less than " << l_end << std::endl;
+		block_clear();
+		a_data.set_read_cursor(l_pos);
+		for (std::size_t i = l_pos; i < l_end; ++i) {
+			l_block.write_uint8(a_data.read_uint8());
+		}
+		l_bf.set_blockdata(l_block.buffer());
+		l_bf.encrypt_with_cbc();
+		block_clear();
+		l_block.assign(l_bf.get_blockdata(), 8);
+		l_ret += l_block;
+		l_pos += 8;
+	} while (l_pos < a_data.size());
+	
+	return l_ret;
+}
+
+data data::bf_decrypt_with_cbc(data& a_data, data& a_key, data& a_iv)
+{
+	// sanity check IV
+	if (a_iv.size() != 8) {
+		throw data_exception("initialization vector needs to be same as block size.");
+	}
+	
+	data l_ret;
+	// bail out if the input buffer isn't a multiple of 8 bytes
+	if ((a_data.size() % 8) != 0) {
+		throw data_exception("Input buffer must be justified on an 8 byte boundary.");
+	}
+
+	ss::data l_block;
+	l_block.fill(8, 0);
+	ss::bf::block l_bf(l_block.buffer(), a_key.buffer(), a_key.size());
+	l_bf.set_iv(a_iv.buffer());
+	std::size_t l_pos = 0;
+
+	auto block_clear = [&]() {
+		l_block.set_write_cursor(0);
+		for (std::size_t i = 0; i < 8; ++i)
+			l_block.write_uint8(0);
+		l_block.set_write_cursor(0);
+	};
+		
+	do {
+		block_clear();
+		a_data.set_read_cursor(l_pos);
+		for (std::size_t i = 0; i < 8; ++i) {
+			l_block.write_uint8(a_data.read_uint8());
+		}
+		l_bf.set_blockdata(l_block.buffer());
+		l_bf.decrypt_with_cbc();
+		block_clear();
+		l_block.assign(l_bf.get_blockdata(), 8);
+		l_ret += l_block;
+		l_pos += 8;
+	} while (l_pos < a_data.size());
+	
+	return l_ret;
+}
+
+data data::encrypt_bf_cbc_hmac_sha2_256(data& a_data, data& a_key, data& a_iv)
+{
+	std::array<std::uint8_t, 32> l_hmac; // space to hold hmac-sha256
+	
+	// compute the hmac on our plaintext and store it
+	hmacsha256(a_key.buffer(), a_key.size(), a_data.buffer(), a_data.size(), l_hmac.data());
+
+	// tack on terminator byte to our data
+	data l_withterm = a_data;
+	l_withterm.set_write_cursor_to_append();
+	l_withterm.write_uint8(0x80);
+
+	// create a new input buffer and seal the hmac value inside
+	data l_temp;
+	l_temp.assign(l_hmac.data(), 32);
+	l_temp += l_withterm;
+	data l_ret = data::bf_encrypt_with_cbc(l_temp, a_key, a_iv);
+	return l_ret;
+}
+
+data data::decrypt_bf_cbc_hmac_sha2_256(data& a_data, data& a_key, data& a_iv)
+{
+	// sanity check m_input_buffer_len
+	if (a_data.size() < 40) {
+		// 32 byte hmac + at least one 8 byte block
+		throw data_exception("Blowfish CBC HMAC/SHA256 buffer must contain at least 40 bytes to decrypt.");
+	}
+
+	std::array<std::uint8_t, 32> l_hmac; // space to hold hmac-sha256
+	std::array<std::uint8_t, 32> l_computed; // space for computed hmac
+
+	data l_dec = data::bf_decrypt_with_cbc(a_data, a_key, a_iv);
+	
+
+	// save bottom 32 bytes, which contain our hmac
+	l_dec.set_read_cursor(0);
+	for (auto& i : l_hmac)
+		i = l_dec.read_uint8();
+		
+	// move everything down by 32
+	l_dec.truncate_front(32);
+	
+	// backtrack until we find the terminator byte
+	std::int64_t l_decsize = l_dec.size();
+	bool l_found = false;
+	while (!l_found) {
+		l_decsize--;
+		if (l_decsize < 0) {
+			// searched the whole buffer, didn't find a terminator
+			throw data_exception("Blowfish CBC HMAC/SHA256 buffer must contain terminator byte.");
+		}
+		if (l_dec[l_decsize] == 0x80) {
+			l_dec.truncate_back(l_decsize);
+			l_found = true;
+		}
+	}
+	
+	// make sure the saved hmac matches the computed hmac
+//	std::cout << "key size " << a_key.size() << " l_dec.size " << l_dec.size() << std::endl;
+	hmacsha256(a_key.buffer(), a_key.size(), l_dec.buffer(), l_dec.size(), l_computed.data());
+	if (memcmp(l_computed.data(), l_hmac.data(), 32)) {
+		throw data_exception("HMAC mismatch error on decrypt. Possible data corruption.");
+	}
+	return l_dec;
 }
 
 /* compression */

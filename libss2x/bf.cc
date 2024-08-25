@@ -409,10 +409,39 @@ block::block(const std::uint8_t *a_buffer, std::uint8_t *a_key, std::size_t a_ke
 {
 	// Initialize our context
 	Blowfish_Init(a_key, a_key_len);
+	set_blockdata(a_buffer);
+}
 
+void block::set_blockdata(const std::uint8_t *a_buffer)
+{
 	// copy block data into our block
 	for (int i = 0; i < 8; ++i)
-		m_block.inb[i] = a_buffer[i];
+		m_block.inb[i] = a_buffer[i];	
+}
+
+void block::set_iv(const std::uint8_t *a_iv)
+{
+	memcpy(m_iv, a_iv, 8);
+}
+
+void block::encrypt_with_cbc()
+{
+	for (int i = 0; i < 8; ++i)
+		m_block.inb[i] ^= m_iv[i];
+	encrypt();
+	memcpy(m_iv, m_block.inb, 8);
+}
+
+void block::decrypt_with_cbc()
+{
+	std::uint8_t l_temp[8];
+
+	memcpy(l_temp, m_block.inb, 8);	
+	decrypt();
+	for (int i = 0; i < 8; ++i) {
+		m_block.inb[i] ^= m_iv[i];
+		m_iv[i] = l_temp[i];
+	}	
 }
 
 void block::encrypt()
