@@ -289,6 +289,11 @@ public:
 	static data encrypt_bf_cbc_hmac_sha2_256(data& a_data, data& a_key, data& a_iv); // use these for encrypting production data
 	static data decrypt_bf_cbc_hmac_sha2_256(data& a_data, data& a_key, data& a_iv);
 	
+	static data bf7_key_random();
+	static data bf7_key_schedule(const std::string& a_string);
+	static data bf7_iv_random();
+	static data bf7_iv_schedule(const std::string& a_string);
+
 	/* compression */
 	
 	data huffman_encode() const;

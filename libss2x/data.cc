@@ -1496,6 +1496,14 @@ data data::bf_key_random()
 	return l_ret;
 }
 
+data data::bf7_key_random()
+{
+	data l_ret;
+	
+	l_ret.random(392); // random 3136 bit Blowfish7 key
+	return l_ret;
+}
+
 data data::bf_key_schedule(const std::string& a_string)
 {
 	// schedule a key by hashing a string
@@ -1506,6 +1514,27 @@ data data::bf_key_schedule(const std::string& a_string)
 	return l_hash;
 }
 
+data data::bf7_key_schedule(const std::string& a_string)
+{
+	data l_work1;
+	l_work1.write_std_str(a_string);
+	data l_hash1 = l_work1.sha2_512();
+	data l_hash2 = l_hash1.sha2_512();
+	data l_hash3 = l_hash2.sha2_512();
+	data l_hash4 = l_hash3.sha2_512();
+	data l_hash5 = l_hash4.sha2_512();
+	data l_hash6 = l_hash5.sha2_512();
+	data l_hash7 = l_hash6.sha2_512();
+	l_hash1 += l_hash2;
+	l_hash1 += l_hash3;
+	l_hash1 += l_hash4;
+	l_hash1 += l_hash5;
+	l_hash1 += l_hash6;
+	l_hash1 += l_hash7;
+	l_hash1.truncate_back(392);
+	return l_hash1;
+}
+
 data data::bf_iv_random()
 {
 	data l_ret;
@@ -1514,13 +1543,30 @@ data data::bf_iv_random()
 	return l_ret;
 }
 
+data data::bf7_iv_random()
+{
+	data l_ret;
+	
+	l_ret.random(16); // random 128 bit Blowfish7 iv
+	return l_ret;
+}
+
 data data::bf_iv_schedule(const std::string& a_string)
 {
 	// schedule a key by hashing a string
 	data l_work;
 	l_work.write_std_str(a_string);
-	data l_hash = l_work.sha2_512();
+	data l_hash = l_work.sha2_384();
 	l_hash.truncate_back(8);
+	return l_hash;
+}
+
+data data::bf7_iv_schedule(const std::string& a_string)
+{
+	data l_work;
+	l_work.write_std_str(a_string);
+	data l_hash = l_work.sha2_384();
+	l_hash.truncate_back(16);
 	return l_hash;
 }
 

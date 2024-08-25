@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="ss2x-test" Version="11000" InternalType="">
   <VirtualDirectory Name="ss2x-test">
+    <File Name="bf7_test.cc"/>
     <File Name="bf_test.cc"/>
     <File Name="rotator_test.cc"/>
     <File Name="json_test.cc"/>
