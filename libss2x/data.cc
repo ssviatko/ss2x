@@ -1614,57 +1614,57 @@ data data::bf7_block_encrypt(data& a_block, data& a_key)
 	}
 	
 	// debug: print our partial keys
-	for (std::size_t i = 0; i < 7; ++i) {
-		std::cout << std::format("partial key {}: {}", i + 1, keys[i].as_hex_str_nospace()) << std::endl;
-	}
+//	for (std::size_t i = 0; i < 7; ++i) {
+//		std::cout << std::format("partial key {}: {}", i + 1, keys[i].as_hex_str_nospace()) << std::endl;
+//	}
 	
 	std::array<std::uint8_t, 20> l_work;
-	auto show_work = [&]() {
-		std::cout << "work buffer: ";
-		for (std::size_t i = 0; i < 20; ++i) {
-			std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)l_work[i];
-			if (i == 15)
-				std::cout << "-";
-		}
-		std::cout << std::endl;
-	};
+//	auto show_work = [&]() {
+//		std::cout << "work buffer: ";
+//		for (std::size_t i = 0; i < 20; ++i) {
+//			std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)l_work[i];
+//			if (i == 15)
+//				std::cout << "-";
+//		}
+//		std::cout << std::endl;
+//	};
 	
 	memcpy(l_work.data(), a_block.buffer(), 16);
 	// wrap around first four bytes on end
 	memcpy(l_work.data() + 16, a_block.buffer(), 4);
-	show_work();
+//	show_work();
 	
 	ss::bf::block block1((std::uint8_t *)l_work.data(), keys[0].buffer(), 56);
 	block1.encrypt();
 	memcpy(l_work.data(), block1.get_blockdata(), 8);
 	memcpy(l_work.data() + 16, l_work.data(), 4);
-	show_work();
+//	show_work();
 	
 	ss::bf::block block2((std::uint8_t *)l_work.data() + 4, keys[1].buffer(), 56);
 	block2.encrypt();
 	memcpy(l_work.data() + 4, block2.get_blockdata(), 8);
-	show_work();
+//	show_work();
 	
 	ss::bf::block block3((std::uint8_t *)l_work.data() + 8, keys[2].buffer(), 56);
 	block3.encrypt();
 	memcpy(l_work.data() + 8, block3.get_blockdata(), 8);
-	show_work();
+//	show_work();
 	
 	ss::bf::block block4((std::uint8_t *)l_work.data() + 12, keys[3].buffer(), 56);
 	block4.encrypt();
 	memcpy(l_work.data() + 12, block4.get_blockdata(), 8);
 	memcpy(l_work.data(), l_work.data() + 16, 4);
-	show_work();
+//	show_work();
 	
 	ss::bf::block block5((std::uint8_t *)l_work.data(), keys[4].buffer(), 56);
 	block5.decrypt();
 	memcpy(l_work.data(), block5.get_blockdata(), 8);
-	show_work();
+//	show_work();
 	
 	ss::bf::block block6((std::uint8_t *)l_work.data() + 8, keys[5].buffer(), 56);
 	block6.decrypt();
 	memcpy(l_work.data() + 8, block6.get_blockdata(), 8);
-	show_work();
+//	show_work();
 	
 	ss::bf::block block7a((std::uint8_t *)l_work.data(), keys[6].buffer(), 56);
 	ss::bf::block block7b((std::uint8_t *)l_work.data() + 8, keys[6].buffer(), 56);
@@ -1672,7 +1672,7 @@ data data::bf7_block_encrypt(data& a_block, data& a_key)
 	block7b.encrypt();
 	memcpy(l_work.data(), block7a.get_blockdata(), 8);
 	memcpy(l_work.data() + 8, block7b.get_blockdata(), 8);
-	show_work();
+//	show_work();
 	
 	data l_ret;
 	for (std::size_t i = 0; i < 16; ++i) {
@@ -1725,24 +1725,24 @@ data data::bf7_block_decrypt(data& a_block, data& a_key)
 	}
 	
 	// debug: print our partial keys
-	for (std::size_t i = 0; i < 7; ++i) {
-		std::cout << std::format("partial key {}: {}", i + 1, keys[i].as_hex_str_nospace()) << std::endl;
-	}
-	
+//	for (std::size_t i = 0; i < 7; ++i) {
+//		std::cout << std::format("partial key {}: {}", i + 1, keys[i].as_hex_str_nospace()) << std::endl;
+//	}
+//	
 	std::array<std::uint8_t, 20> l_work;
-	auto show_work = [&]() {
-		std::cout << "work buffer: ";
-		for (std::size_t i = 0; i < 20; ++i) {
-			std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)l_work[i];
-			if (i == 15)
-				std::cout << "-";
-		}
-		std::cout << std::endl;
-	};
+//	auto show_work = [&]() {
+//		std::cout << "work buffer: ";
+//		for (std::size_t i = 0; i < 20; ++i) {
+//			std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)l_work[i];
+//			if (i == 15)
+//				std::cout << "-";
+//		}
+//		std::cout << std::endl;
+//	};
 	
 	memcpy(l_work.data(), a_block.buffer(), 16);
 	memset(l_work.data() + 16, 0, 4);
-	show_work();
+//	show_work();
 	
 	ss::bf::block block7a((std::uint8_t *)l_work.data(), keys[6].buffer(), 56);
 	ss::bf::block block7b((std::uint8_t *)l_work.data() + 8, keys[6].buffer(), 56);
@@ -1750,39 +1750,39 @@ data data::bf7_block_decrypt(data& a_block, data& a_key)
 	block7b.decrypt();
 	memcpy(l_work.data(), block7a.get_blockdata(), 8);
 	memcpy(l_work.data() + 8, block7b.get_blockdata(), 8);
-	show_work();
+//	show_work();
 	
 	ss::bf::block block6((std::uint8_t *)l_work.data() + 8, keys[5].buffer(), 56);
 	block6.encrypt();
 	memcpy(l_work.data() + 8, block6.get_blockdata(), 8);
-	show_work();
+//	show_work();
 	
 	ss::bf::block block5((std::uint8_t *)l_work.data(), keys[4].buffer(), 56);
 	block5.encrypt();
 	memcpy(l_work.data(), block5.get_blockdata(), 8);
 	memcpy(l_work.data() + 16, l_work.data(), 4);
-	show_work();
+//	show_work();
 	
 	ss::bf::block block4((std::uint8_t *)l_work.data() + 12, keys[3].buffer(), 56);
 	block4.decrypt();
 	memcpy(l_work.data() + 12, block4.get_blockdata(), 8);
 	memcpy(l_work.data(), l_work.data() + 16, 4);
-	show_work();
+//	show_work();
 	
 	ss::bf::block block3((std::uint8_t *)l_work.data() + 8, keys[2].buffer(), 56);
 	block3.decrypt();
 	memcpy(l_work.data() + 8, block3.get_blockdata(), 8);
-	show_work();
+//	show_work();
 	
 	ss::bf::block block2((std::uint8_t *)l_work.data() + 4, keys[1].buffer(), 56);
 	block2.decrypt();
 	memcpy(l_work.data() + 4, block2.get_blockdata(), 8);
-	show_work();
+//	show_work();
 	
 	ss::bf::block block1((std::uint8_t *)l_work.data(), keys[0].buffer(), 56);
 	block1.decrypt();
 	memcpy(l_work.data(), block1.get_blockdata(), 8);
-	show_work();
+//	show_work();
 	
 	data l_ret;
 	for (std::size_t i = 0; i < 16; ++i) {
@@ -1837,6 +1837,47 @@ data data::bf_encrypt_with_cbc(data& a_data, data& a_key, data& a_iv)
 	return l_ret;
 }
 
+data data::bf7_encrypt_with_cbc(data& a_data, data& a_key, data& a_iv)
+{
+	// sanity check IV
+	if (a_iv.size() != 16) {
+		throw data_exception("initialization vector needs to be same as block size.");
+	}
+	
+	data l_ret;
+	if (a_data.size() == 0) {
+		// just return empty buffer if we were passed zero length data
+		return l_ret;
+	}
+	
+	data l_block;
+	data l_work_iv = a_iv;
+	std::size_t l_pos = 0;
+
+	do {
+		std::size_t l_end = l_pos + 16;
+		l_end = (l_end > a_data.size() ? a_data.size() : l_end);
+//		std::cout << "reading from " << std::dec << l_pos << " to one less than " << l_end << std::endl;
+		a_data.set_read_cursor(l_pos);
+		l_block.clear();
+		l_block.fill(16, 0);
+		l_block.set_write_cursor(0);
+		for (std::size_t i = l_pos; i < l_end; ++i) {
+			l_block.write_uint8(a_data.read_uint8());
+		}
+//		std::cout << "iv is     " << l_work_iv.as_hex_str_nospace() << std::endl;
+		for (int i = 0; i < 16; ++i)
+			l_block[i] ^= l_work_iv[i];
+		data l_encblock = bf7_block_encrypt(l_block, a_key);
+		l_work_iv = l_encblock;
+//		std::cout << "iv is now " << l_work_iv.as_hex_str_nospace() << std::endl;
+		l_ret += l_encblock;
+		l_pos += 16;
+	} while (l_pos < a_data.size());
+	
+	return l_ret;
+}
+
 data data::bf_decrypt_with_cbc(data& a_data, data& a_key, data& a_iv)
 {
 	// sanity check IV
@@ -1880,6 +1921,41 @@ data data::bf_decrypt_with_cbc(data& a_data, data& a_key, data& a_iv)
 	return l_ret;
 }
 
+data data::bf7_decrypt_with_cbc(data& a_data, data& a_key, data& a_iv)
+{
+	// sanity check IV
+	if (a_iv.size() != 16) {
+		throw data_exception("initialization vector needs to be same as block size.");
+	}
+	
+	data l_ret;
+	// bail out if the input buffer isn't a multiple of 8 bytes
+	if ((a_data.size() % 16) != 0) {
+		throw data_exception("Input buffer must be justified on a 16 byte boundary.");
+	}
+
+	ss::data l_block;
+	data l_work_iv = a_iv;
+	std::size_t l_pos = 0;
+
+	do {
+		l_block.clear();
+		a_data.set_read_cursor(l_pos);
+		for (std::size_t i = 0; i < 16; ++i) {
+			l_block.write_uint8(a_data.read_uint8());
+		}
+		data l_save = l_block;
+		data l_decblock = bf7_block_decrypt(l_block, a_key);
+		for (int i = 0; i < 16; ++i)
+			l_decblock[i] ^= l_work_iv[i];
+		l_work_iv = l_save;
+		l_ret += l_decblock;
+		l_pos += 16;
+	} while (l_pos < a_data.size());
+	
+	return l_ret;
+}
+
 data data::encrypt_bf_cbc_hmac_sha2_256(data& a_data, data& a_key, data& a_iv)
 {
 	std::array<std::uint8_t, 32> l_hmac; // space to hold hmac-sha256
@@ -1900,6 +1976,26 @@ data data::encrypt_bf_cbc_hmac_sha2_256(data& a_data, data& a_key, data& a_iv)
 	return l_ret;
 }
 
+data data::encrypt_bf7_cbc_hmac_sha2_256(data& a_data, data& a_key, data& a_iv)
+{
+	std::array<std::uint8_t, 32> l_hmac; // space to hold hmac-sha256
+	
+	// compute the hmac on our plaintext and store it
+	hmacsha256(a_key.buffer(), a_key.size(), a_data.buffer(), a_data.size(), l_hmac.data());
+
+	// tack on terminator byte to our data
+	data l_withterm = a_data;
+	l_withterm.set_write_cursor_to_append();
+	l_withterm.write_uint8(0x80);
+
+	// create a new input buffer and seal the hmac value inside
+	data l_temp;
+	l_temp.assign(l_hmac.data(), 32);
+	l_temp += l_withterm;
+	data l_ret = data::bf7_encrypt_with_cbc(l_temp, a_key, a_iv);
+	return l_ret;
+}
+
 data data::decrypt_bf_cbc_hmac_sha2_256(data& a_data, data& a_key, data& a_iv)
 {
 	// sanity check m_input_buffer_len
@@ -1913,7 +2009,6 @@ data data::decrypt_bf_cbc_hmac_sha2_256(data& a_data, data& a_key, data& a_iv)
 
 	data l_dec = data::bf_decrypt_with_cbc(a_data, a_key, a_iv);
 	
-
 	// save bottom 32 bytes, which contain our hmac
 	l_dec.set_read_cursor(0);
 	for (auto& i : l_hmac)
@@ -1944,6 +2039,80 @@ data data::decrypt_bf_cbc_hmac_sha2_256(data& a_data, data& a_key, data& a_iv)
 		throw data_exception("HMAC mismatch error on decrypt. Possible data corruption.");
 	}
 	return l_dec;
+}
+
+data data::decrypt_bf7_cbc_hmac_sha2_256(data& a_data, data& a_key, data& a_iv)
+{
+	// sanity check m_input_buffer_len
+	if (a_data.size() < 48) {
+		// 32 byte hmac + at least one 16 byte block
+		throw data_exception("Blowfish7 CBC HMAC/SHA256 buffer must contain at least 48 bytes to decrypt.");
+	}
+
+	std::array<std::uint8_t, 32> l_hmac; // space to hold hmac-sha256
+	std::array<std::uint8_t, 32> l_computed; // space for computed hmac
+
+	data l_dec = data::bf7_decrypt_with_cbc(a_data, a_key, a_iv);
+
+	// save bottom 32 bytes, which contain our hmac
+	l_dec.set_read_cursor(0);
+	for (auto& i : l_hmac)
+		i = l_dec.read_uint8();
+		
+	// move everything down by 32
+	l_dec.truncate_front(32);
+	
+	// backtrack until we find the terminator byte
+	std::int64_t l_decsize = l_dec.size();
+	bool l_found = false;
+	while (!l_found) {
+		l_decsize--;
+		if (l_decsize < 0) {
+			// searched the whole buffer, didn't find a terminator
+			throw data_exception("Blowfish7 CBC HMAC/SHA256 buffer must contain terminator byte.");
+		}
+		if (l_dec[l_decsize] == 0x80) {
+			l_dec.truncate_back(l_decsize);
+			l_found = true;
+		}
+	}
+	
+	// make sure the saved hmac matches the computed hmac
+//	std::cout << "key size " << a_key.size() << " l_dec.size " << l_dec.size() << std::endl;
+	hmacsha256(a_key.buffer(), a_key.size(), l_dec.buffer(), l_dec.size(), l_computed.data());
+	if (memcmp(l_computed.data(), l_hmac.data(), 32)) {
+		throw data_exception("HMAC mismatch error on decrypt. Possible data corruption.");
+	}
+	return l_dec;
+}
+
+std::string data::encode_little_secret(const std::string& a_passphrase, const std::string& a_message)
+{
+	try {
+		data l_message;
+		l_message.write_std_str(a_message);
+		data l_key = bf7_key_schedule(a_passphrase);
+		data l_iv = bf7_iv_schedule(a_passphrase);
+		data l_enc = encrypt_bf7_cbc_hmac_sha2_256(l_message, l_key, l_iv);
+		return l_enc.as_base64();
+	} catch (std::exception& e) {
+		return std::string("error (") + e.what() + std::string(")");
+	}
+}
+
+std::string data::decode_little_secret(const std::string& a_passphrase, const std::string& a_message)
+{
+	try {
+		data l_enc;
+		l_enc.write_base64(a_message);
+		data l_key = bf7_key_schedule(a_passphrase);
+		data l_iv = bf7_iv_schedule(a_passphrase);
+		data l_dec = decrypt_bf7_cbc_hmac_sha2_256(l_enc, l_key, l_iv);
+		std::string l_ret = l_dec.read_std_str(l_dec.size());
+		return l_ret;
+	} catch (std::exception& e) {
+		return std::string("error (") + e.what() + std::string(")");
+	}
 }
 
 /* compression */
