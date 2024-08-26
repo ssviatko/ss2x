@@ -82,11 +82,12 @@ clean:
 	rm -f $(TARGET)
 	$(MAKE) -C libss2x/ clean
 	rm -f libss2x.so*
-	rm dispatchable_test
-	rm thread_test
-	rm nd_test
-	rm json_test
-	rm bf_test
-	rm bf7_test
+	rm -f dispatchable_test
+	rm -f thread_test
+	rm -f nd_test
+	rm -f rotator_test
+	rm -f json_test
+	rm -f bf_test
+	rm -f bf7_test
 	
 	
