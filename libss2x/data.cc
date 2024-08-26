@@ -851,11 +851,11 @@ void data::write_int24(std::int32_t a_int32)
 	size4_union l_work;
 	l_work.int32_val = a_int32;
 	if (l_work.int32_val > 8388607) {
-		data_exception e("uint24 value should not exceed 8388607.");
+		data_exception e("int24 value should not exceed 8388607.");
 		throw (e);
 	}
 	if (l_work.int32_val < -8388608) {
-		data_exception e("uint24 value should not be less than -8388608.");
+		data_exception e("int24 value should not be less than -8388608.");
 		throw (e);
 	}
 	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
@@ -900,7 +900,7 @@ void data::write_uint40(std::uint64_t a_uint64)
 	size8_union l_work;
 	l_work.uint64_val = a_uint64;
 	if (l_work.uint64_val > 1099511627775ULL) {
-		data_exception e("uint24 value should not exceed 1099511627775.");
+		data_exception e("uint40 value should not exceed 1099511627775.");
 		throw (e);
 	}
 	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
@@ -941,11 +941,11 @@ void data::write_int40(std::int64_t a_int64)
 	size8_union l_work;
 	l_work.int64_val = a_int64;
 	if (l_work.int64_val > 549755813887LL) {
-		data_exception e("uint24 value should not exceed 549755813887.");
+		data_exception e("int440value should not exceed 549755813887.");
 		throw (e);
 	}
 	if (l_work.int64_val < -549755813888LL) {
-		data_exception e("uint24 value should not be less than -549755813888.");
+		data_exception e("int40 value should not be less than -549755813888.");
 		throw (e);
 	}
 	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
@@ -1000,7 +1000,7 @@ void data::write_uint48(std::uint64_t a_uint64)
 	size8_union l_work;
 	l_work.uint64_val = a_uint64;
 	if (l_work.uint64_val > 281474976710655ULL) {
-		data_exception e("uint24 value should not exceed 281474976710655.");
+		data_exception e("uint48 value should not exceed 281474976710655.");
 		throw (e);
 	}
 	if ((std::endian::native == std::endian::little) && m_network_byte_order) {
@@ -1039,11 +1039,11 @@ void data::write_int48(std::int64_t a_int64)
 	size8_union l_work;
 	l_work.int64_val = a_int64;
 	if (l_work.int64_val > 140737488355327LL) {
-		data_exception e("uint24 value should not exceed 140737488355327.");
+		data_exception e("int48 value should not exceed 140737488355327.");
 		throw (e);
 	}
 	if (l_work.int64_val < -140737488355328LL) {
-		data_exception e("uint24 value should not be less than -140737488355328.");
+		data_exception e("int48 value should not be less than -140737488355328.");
 		throw (e);
 	}
 	if ((std::endian::native == std::endian::little) && m_network_byte_order) {

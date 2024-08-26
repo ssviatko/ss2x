@@ -9,9 +9,9 @@ UNAME = $(shell uname)
 CC = gcc
 CPP = g++
 LD = g++
-LDFLAGS = -Wl,-rpath,. -Wl,-rpath=/usr/local/lib64 -L. -lpthread -lss2x -lstdc++exp
+LDFLAGS = -Wl,-rpath,./libss2x -Wl,-rpath=/usr/local/lib64 -L./libss2x -lpthread -lss2x -lstdc++exp
 TARGET = ss2x
-OBJS = main.o
+OBJS = ss2x.o
 
 DT_OBJS = dispatchable_test.o
 DT_TARGET = dispatchable_test
@@ -34,12 +34,6 @@ $(TARGET): $(OBJS)
 
 	@if ! test -f $(BUILD_NUMBER_FILE); then echo 0 > $(BUILD_NUMBER_FILE); fi
 	@echo $$(($$(cat $(BUILD_NUMBER_FILE)) + 1)) > $(BUILD_NUMBER_FILE)
-	$(MAKE) -C libss2x/ all
-	cp libss2x/libss2x.so.1.0.0 .
-	rm -f libss2x.so.1
-	rm -f libss2x.so
-	ln -s libss2x.so.1.0.0 libss2x.so.1
-	ln -s libss2x.so.1.0.0 libss2x.so
 	$(LD) $(OBJS) -o $(TARGET) $(LDFLAGS)
 
 $(DT_TARGET): $(DT_OBJS)
@@ -80,14 +74,12 @@ clean:
 	rm -f *.o
 	rm -f *~
 	rm -f $(TARGET)
-	$(MAKE) -C libss2x/ clean
-	rm -f libss2x.so*
-	rm -f dispatchable_test
-	rm -f thread_test
-	rm -f nd_test
-	rm -f rotator_test
-	rm -f json_test
-	rm -f bf_test
-	rm -f bf7_test
+	rm -f $(DT_TARGET) 
+	rm -f $(TT_TARGET)
+	rm -f $(ND_TARGET)
+	rm -f $(ROT_TARGET)
+	rm -f $(JSON_TARGET)
+	rm -f $(BF_TEST_TARGET)
+	rm -f $(BF7_TEST_TARGET)
 	
 	
