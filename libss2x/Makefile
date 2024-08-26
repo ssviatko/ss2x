@@ -17,6 +17,7 @@ libss2x: $(OBJS)
 	rm -f libss2x.so
 	ln -s libss2x.so.1.0.0 libss2x.so.1
 	ln -s libss2x.so.1.0.0 libss2x.so
+	strip libss2x.so.1.0.0
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<

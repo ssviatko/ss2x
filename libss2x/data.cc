@@ -2094,7 +2094,12 @@ std::string data::encode_little_secret(const std::string& a_passphrase, const st
 		data l_key = bf7_key_schedule(a_passphrase);
 		data l_iv = bf7_iv_schedule(a_passphrase);
 		data l_enc = encrypt_bf7_cbc_hmac_sha2_256(l_message, l_key, l_iv);
-		return l_enc.as_base64();
+		data l_bracket;
+		l_bracket.write_std_str("a[");
+		l_bracket.write_std_str(l_enc.as_base64());
+		l_bracket.write_std_str("]");
+		std::string l_ret = l_bracket.read_std_str(l_bracket.size());
+		return l_ret;
 	} catch (std::exception& e) {
 		return std::string("error (") + e.what() + std::string(")");
 	}
@@ -2103,8 +2108,20 @@ std::string data::encode_little_secret(const std::string& a_passphrase, const st
 std::string data::decode_little_secret(const std::string& a_passphrase, const std::string& a_message)
 {
 	try {
+		std::string l_bracket = a_message;
+		std::string::iterator l_closing_it = l_bracket.end() - 1;
+		std::string::iterator l_opening_it = l_bracket.begin() + 1;
+		std::string::iterator l_version_it = l_bracket.begin();
+		if (*l_version_it != 'a') {
+			throw data_exception("unsupported message version.");
+		}
+		if ((*l_opening_it != '[') || (*l_closing_it != ']')) {
+			throw data_exception("unsupported message format.");
+		}
+		l_bracket.erase(l_closing_it);
+		l_bracket.erase(0, 2);
 		data l_enc;
-		l_enc.write_base64(a_message);
+		l_enc.write_base64(l_bracket);
 		data l_key = bf7_key_schedule(a_passphrase);
 		data l_iv = bf7_iv_schedule(a_passphrase);
 		data l_dec = decrypt_bf7_cbc_hmac_sha2_256(l_enc, l_key, l_iv);
