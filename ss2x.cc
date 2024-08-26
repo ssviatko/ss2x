@@ -83,6 +83,15 @@ int main(int argc, char **argv)
 	std::cout << "build no: " << BUILD_NUMBER << " release: " << RELEASE_NUMBER << " built on: " << BUILD_DATE << std::endl;
 	std::cout << "ss2xlog logging framework test" << std::endl;
 
+	// failure services
+	auto ctrlc = []() {
+		std::cout << "Caught control-C, exiting..." << std::endl;
+		exit(EXIT_SUCCESS);
+	};
+	
+	ss::failure_services& l_fs = ss::failure_services::get();
+	l_fs.install_signal_handler();
+	l_fs.install_sigint_handler(ctrlc);
 	ss::log::ctx& ctx = ss::log::ctx::get();
 	
 	// register main thread
@@ -178,8 +187,8 @@ int main(int argc, char **argv)
 	a.save_file("a.hex");
 	ctx.log("saving to file a.hex");
 	ss::data c;
-	c.load_file("main.cc");
-	ctx.log(std::format("loaded main.cc, file size is {}, crc32 is {:x}.", c.size(), c.crc32(0)));
+	c.load_file("ss2x.cc");
+	ctx.log(std::format("loaded ss2x.cc, file size is {}, crc32 is {:x}.", c.size(), c.crc32(0)));
 	ctx.log(std::format("md5: {}", c.md5().as_hex_str_nospace()));
 	ctx.log(std::format("sha1: {}", c.sha1().as_hex_str_nospace()));
 	ctx.log(std::format("sha2_224: {}", c.sha2_224().as_hex_str_nospace()));
@@ -566,15 +575,6 @@ int main(int argc, char **argv)
 		ctx.log(std::format("circle is now {} in length.", circle.size()));
 	}
 	
-	// failure services
-	auto ctrlc = []() {
-		std::cout << "Caught control-C, exiting..." << std::endl;
-		exit(EXIT_SUCCESS);
-	};
-	
-	ss::failure_services& l_fs = ss::failure_services::get();
-	l_fs.install_signal_handler();
-	l_fs.install_sigint_handler(ctrlc);
 	std::cout << "press control-C or you will get a SIGSEGV" << std::endl;
 	for (int i = 0; i < 250; ++i)
 		std::this_thread::sleep_for(std::chrono::milliseconds(20));
