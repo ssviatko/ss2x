@@ -31,6 +31,7 @@
 #include "sha1.h"
 #include "sha2.h"
 #include "hmac.h"
+#include "aes.h"
 
 namespace ss {
 
@@ -303,6 +304,17 @@ public:
 	static std::string encode_little_secret(const std::string& a_passphrase, const std::string& a_message);
 	static std::string decode_little_secret(const std::string& a_passphrase, const std::string& a_message);
 
+	static data aes256_key_random();
+	static data aes256_key_schedule(const std::string& a_string);
+	static data aes256_iv_random();
+	static data aes256_iv_schedule(const std::string& a_string);
+	static data aes256_block_encrypt(data& a_block, data& a_key);
+	static data aes256_block_decrypt(data& a_block, data& a_key);
+	static data aes256_encrypt_with_cbc(data& a_data, data& a_key, data& a_iv);
+	static data aes256_decrypt_with_cbc(data& a_data, data& a_key, data& a_iv);
+	static data encrypt_aes256_cbc_hmac_sha2_256(data& a_data, data& a_key, data& a_iv);
+	static data decrypt_aes256_cbc_hmac_sha2_256(data& a_data, data& a_key, data& a_iv);
+	
 	/* compression */
 	
 	data huffman_encode() const;

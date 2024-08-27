@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="libss2x" Version="11000" InternalType="">
   <VirtualDirectory Name="libss2x">
+    <File Name="aes.c"/>
+    <File Name="aes.h"/>
     <File Name="hmac.c"/>
     <File Name="hmac.h"/>
     <File Name="json.h"/>

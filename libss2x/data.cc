@@ -1486,7 +1486,7 @@ data data::sha2_512()
 	return l_digest;
 }
 
-/* encryption */
+/* encryption: Blowfish and it's variants */
 
 data data::bf_key_random()
 {
@@ -2130,6 +2130,221 @@ std::string data::decode_little_secret(const std::string& a_passphrase, const st
 	} catch (std::exception& e) {
 		return std::string("error (") + e.what() + std::string(")");
 	}
+}
+
+/* AES section */
+ 
+data data::aes256_key_random()
+{
+	data l_ret;
+	l_ret.random(32); // random 256 bit aes key
+	return l_ret;
+}
+
+data data::aes256_key_schedule(const std::string& a_string)
+{
+	data l_work;
+	l_work.write_std_str(a_string);
+	data l_hash = l_work.sha2_512();
+	l_hash.truncate_back(32);
+	return l_hash;
+}
+
+data data::aes256_iv_random()
+{
+	data l_ret;
+	l_ret.random(16); // random 128 bit aes iv
+	return l_ret;
+}
+
+data data::aes256_iv_schedule(const std::string& a_string)
+{
+	data l_work;
+	l_work.write_std_str(a_string);
+	data l_hash = l_work.sha2_384();
+	l_hash.truncate_back(16);
+	return l_hash;
+}
+
+data data::aes256_block_encrypt(data& a_block, data& a_key)
+{
+	// enforce size constraints on block and key
+	if (a_block.size() != 16) {
+		throw data_exception("AES block must be 16 bytes in length.");
+	}
+	if (a_key.size() != 32) {
+		throw data_exception("AES256 key must be 32 bytes in length.");
+	}
+	
+	data l_block = a_block;
+//	std::cout << "starting with block " << l_block.as_hex_str_nospace() << std::endl;
+//	std::cout << "starting with key   " << a_key.as_hex_str_nospace() << std::endl;
+	struct AES_ctx ctx;
+	AES_init_ctx(&ctx, a_key.buffer());
+	AES_ECB_encrypt(&ctx, l_block.buffer());
+//	std::cout << "neding   with block " << l_block.as_hex_str_nospace() << std::endl;
+	return l_block;
+}
+
+data data::aes256_block_decrypt(data& a_block, data& a_key)
+{
+	// enforce size constraints on block and key
+	if (a_block.size() != 16) {
+		throw data_exception("AES block must be 16 bytes in length.");
+	}
+	if (a_key.size() != 32) {
+		throw data_exception("AES256 key must be 32 bytes in length.");
+	}
+	
+	data l_block = a_block;
+//	std::cout << "starting with block " << l_block.as_hex_str_nospace() << std::endl;
+//	std::cout << "starting with key   " << a_key.as_hex_str_nospace() << std::endl;
+	struct AES_ctx ctx;
+	AES_init_ctx(&ctx, a_key.buffer());
+	AES_ECB_decrypt(&ctx, l_block.buffer());
+//	std::cout << "neding   with block " << l_block.as_hex_str_nospace() << std::endl;
+	return l_block;
+}
+
+data data::aes256_encrypt_with_cbc(data& a_data, data& a_key, data& a_iv)
+{
+	// sanity check IV
+	if (a_iv.size() != 16) {
+		throw data_exception("AES initialization vector needs to be same as block size.");
+	}
+	
+	data l_ret;
+	if (a_data.size() == 0) {
+		// just return empty buffer if we were passed zero length data
+		return l_ret;
+	}
+	
+	data l_block;
+	data l_work_iv = a_iv;
+	std::size_t l_pos = 0;
+
+	do {
+		std::size_t l_end = l_pos + 16;
+		l_end = (l_end > a_data.size() ? a_data.size() : l_end);
+//		std::cout << "reading from " << std::dec << l_pos << " to one less than " << l_end << std::endl;
+		a_data.set_read_cursor(l_pos);
+		l_block.clear();
+		l_block.fill(16, 0);
+		l_block.set_write_cursor(0);
+		for (std::size_t i = l_pos; i < l_end; ++i) {
+			l_block.write_uint8(a_data.read_uint8());
+		}
+//		std::cout << "iv is     " << l_work_iv.as_hex_str_nospace() << std::endl;
+		for (int i = 0; i < 16; ++i)
+			l_block[i] ^= l_work_iv[i];
+		data l_encblock = aes256_block_encrypt(l_block, a_key);
+		l_work_iv = l_encblock;
+//		std::cout << "iv is now " << l_work_iv.as_hex_str_nospace() << std::endl;
+		l_ret += l_encblock;
+		l_pos += 16;
+	} while (l_pos < a_data.size());
+	
+	return l_ret;
+}
+
+data data::aes256_decrypt_with_cbc(data& a_data, data& a_key, data& a_iv)
+{
+	// sanity check IV
+	if (a_iv.size() != 16) {
+		throw data_exception("initialization vector needs to be same as block size.");
+	}
+	
+	data l_ret;
+	// bail out if the input buffer isn't a multiple of 8 bytes
+	if ((a_data.size() % 16) != 0) {
+		throw data_exception("Input buffer must be justified on a 16 byte boundary.");
+	}
+
+	ss::data l_block;
+	data l_work_iv = a_iv;
+	std::size_t l_pos = 0;
+
+	do {
+		l_block.clear();
+		a_data.set_read_cursor(l_pos);
+		for (std::size_t i = 0; i < 16; ++i) {
+			l_block.write_uint8(a_data.read_uint8());
+		}
+		data l_save = l_block;
+		data l_decblock = aes256_block_decrypt(l_block, a_key);
+		for (int i = 0; i < 16; ++i)
+			l_decblock[i] ^= l_work_iv[i];
+		l_work_iv = l_save;
+		l_ret += l_decblock;
+		l_pos += 16;
+	} while (l_pos < a_data.size());
+	
+	return l_ret;
+}
+
+data data::encrypt_aes256_cbc_hmac_sha2_256(data& a_data, data& a_key, data& a_iv)
+{
+	std::array<std::uint8_t, 32> l_hmac; // space to hold hmac-sha256
+	
+	// compute the hmac on our plaintext and store it
+	hmacsha256(a_key.buffer(), a_key.size(), a_data.buffer(), a_data.size(), l_hmac.data());
+
+	// tack on terminator byte to our data
+	data l_withterm = a_data;
+	l_withterm.set_write_cursor_to_append();
+	l_withterm.write_uint8(0x80);
+
+	// create a new input buffer and seal the hmac value inside
+	data l_temp;
+	l_temp.assign(l_hmac.data(), 32);
+	l_temp += l_withterm;
+	data l_ret = data::aes256_encrypt_with_cbc(l_temp, a_key, a_iv);
+	return l_ret;
+}
+
+data data::decrypt_aes256_cbc_hmac_sha2_256(data& a_data, data& a_key, data& a_iv)
+{
+	// sanity check m_input_buffer_len
+	if (a_data.size() < 48) {
+		// 32 byte hmac + at least one 16 byte block
+		throw data_exception("AES256 CBC HMAC/SHA256 buffer must contain at least 48 bytes to decrypt.");
+	}
+
+	std::array<std::uint8_t, 32> l_hmac; // space to hold hmac-sha256
+	std::array<std::uint8_t, 32> l_computed; // space for computed hmac
+
+	data l_dec = data::aes256_decrypt_with_cbc(a_data, a_key, a_iv);
+
+	// save bottom 32 bytes, which contain our hmac
+	l_dec.set_read_cursor(0);
+	for (auto& i : l_hmac)
+		i = l_dec.read_uint8();
+		
+	// move everything down by 32
+	l_dec.truncate_front(32);
+	
+	// backtrack until we find the terminator byte
+	std::int64_t l_decsize = l_dec.size();
+	bool l_found = false;
+	while (!l_found) {
+		l_decsize--;
+		if (l_decsize < 0) {
+			// searched the whole buffer, didn't find a terminator
+			throw data_exception("AES256 CBC HMAC/SHA256 buffer must contain terminator byte.");
+		}
+		if (l_dec[l_decsize] == 0x80) {
+			l_dec.truncate_back(l_decsize);
+			l_found = true;
+		}
+	}
+	
+	// make sure the saved hmac matches the computed hmac
+//	std::cout << "key size " << a_key.size() << " l_dec.size " << l_dec.size() << std::endl;
+	hmacsha256(a_key.buffer(), a_key.size(), l_dec.buffer(), l_dec.size(), l_computed.data());
+	if (memcmp(l_computed.data(), l_hmac.data(), 32)) {
+		throw data_exception("HMAC mismatch error on decrypt. Possible data corruption.");
+	}
+	return l_dec;
 }
 
 /* compression */
