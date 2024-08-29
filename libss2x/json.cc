@@ -704,7 +704,7 @@ std::string make_human_readable(std::string a_json)
 	do {
 		--l_bwd_it;
 //		std::cout << " -" << *l_bwd_it << "- ";
-		std::cout.flush();
+//		std::cout.flush();
 		switch (*l_bwd_it) {
 			case '{':
 			case '}':
