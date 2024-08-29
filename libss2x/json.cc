@@ -217,7 +217,19 @@ std::shared_ptr<string> parse_engine::collect_string()
 		switch (l_state) {
 			case cs_state::CS_COLLECT_CHAR:
 			{
-				if (l_next == '\"') {
+				if (l_next == '\\') {
+					auto l_bump_it = std::next(m_json_it, 1);
+					char l_bump = *l_bump_it;
+					if (l_bump == '\"') {
+						// it's an excape sequence, so ignore it
+						l_collected += l_next;
+						l_collected += l_bump;
+						++m_json_it; // extra increment because we used 2
+					} else {
+						// just a lonely backslash
+						l_collected += l_next;
+					}
+				} else if (l_next == '\"') {
 					l_ret->m_content = l_collected;
 					goto cs_done;
 				} else {
@@ -599,40 +611,216 @@ std::shared_ptr<master> parse_json(const std::string& a_json)
 
 std::string make_human_readable(std::string a_json)
 {
-	// assumes a syntactically correct JSON string with no tabs or line breaks as input
+	// assumes a syntactically correct JSON string
 	// tab/return on [ or { character,
 	// reduce tab level + return on ] or } character
 	std::size_t l_tablevel = 0;
 	std::string l_ret;
-	
+	if (a_json.size() == 0)
+		return l_ret;
+
+	// remove all tabs, CR's and LF's
+	std::string l_tonolf = a_json;
+	std::string l_totrim;
+	auto l_nolf_it = l_tonolf.begin();
+	while (l_nolf_it != l_tonolf.end()) {
+		switch (*l_nolf_it) {
+			case '\t':
+			case 10:
+			case 13:
+				// throw away
+				break;
+			default:
+				l_totrim += *l_nolf_it;
+		}
+		++l_nolf_it;
+	}
+
+	// remove nearby spaces from brackets/braces/commas
+	std::string l_trimback;
+	bool l_inquotes = false;
+	bool l_throwaway = false;
+
+//	std::cout << "trimming: " << l_totrim << std::endl;
+	auto l_fwd_it = l_totrim.begin();
+	while (l_fwd_it != l_totrim.end()) {
+		switch (*l_fwd_it) {
+			case '{':
+			case '}':
+			case '[':
+			case ']':
+			case ',':
+			case ':':
+				if (!l_inquotes) {
+					l_throwaway = true;
+					l_trimback += *l_fwd_it;
+				} else {
+					l_trimback += *l_fwd_it;
+				}
+				break;
+			case ' ':
+				if (!l_throwaway) {
+					l_trimback += *l_fwd_it;
+				}
+				break;
+			case '"':
+				l_inquotes = !l_inquotes;
+				l_trimback += *l_fwd_it;
+				break;
+			case '\\':
+				{
+					// deal with escapes
+					auto l_bump_it = std::next(l_fwd_it, 1);
+					char l_next = *l_bump_it;
+					if (l_next == '"') {
+						// escaped quote character, ignore it
+						l_trimback += *l_fwd_it;
+						++l_fwd_it; // extra increment since we used 2 characters
+						l_trimback += *l_fwd_it;
+						break;
+					} else {
+						// just a rogue backslash, print it
+						l_trimback += *l_fwd_it;
+						break;
+					}
+					break;
+				}
+			default:
+				l_trimback += *l_fwd_it;
+				if (l_throwaway) {
+					l_throwaway = false;
+				}
+				break;
+		}
+		++l_fwd_it;
+	}
+
+	std::string l_trimmed;
+	l_throwaway = false;
+	l_inquotes = false;
+
+//	std::cout << "back trimming: " << l_trimback << std::endl;
+	auto l_bwd_it = l_trimback.end();
+	do {
+		--l_bwd_it;
+//		std::cout << " -" << *l_bwd_it << "- ";
+		std::cout.flush();
+		switch (*l_bwd_it) {
+			case '{':
+			case '}':
+			case '[':
+			case ']':
+			case ',':
+			case ':':
+				if (!l_inquotes) {
+					l_throwaway = true;
+					l_trimmed = *l_bwd_it + l_trimmed;
+				} else {
+					l_trimmed = *l_bwd_it + l_trimmed;
+				}
+				break;
+			case ' ':
+				if (!l_throwaway) {
+					l_trimmed = *l_bwd_it + l_trimmed;
+				}
+				break;
+			case '"':
+				{
+					// check if this is part of a backslash pair
+					auto l_bump_it = std::next(l_bwd_it, -1);
+					if (*l_bump_it == '\\') {
+						l_trimmed = std::string(1, *l_bump_it) + std::string(1, *l_bwd_it) + l_trimmed;
+						--l_bwd_it; // extra decrement since we used 2
+					} else {
+						l_inquotes = !l_inquotes;
+						l_trimmed = *l_bwd_it + l_trimmed;
+					}
+					break;
+				}
+			default:
+				l_trimmed = *l_bwd_it + l_trimmed;
+				if (l_throwaway) {
+					l_throwaway = false;
+				}
+				break;
+		}
+	} while (l_bwd_it != l_trimback.begin());
+//	std::cout << "trimmed: " << l_trimmed << std::endl;
+
 	auto embed_tabs = [&]() {
 		for (std::size_t i = 1; i <= l_tablevel; ++i)
 			l_ret += '\t';
 	};
 	
+	l_inquotes = false;
 	l_ret += '\n'; // kick it off with a line break
-	for (const auto& i: a_json) {
-		if ((i == '{') || (i == '[')) {
-			l_ret += i;
-			l_ret += '\n';
-			l_tablevel++;
-			embed_tabs();
-			continue;
+	auto l_lb_it = l_trimmed.begin();
+	while (l_lb_it != l_trimmed.end()) {
+		switch (*l_lb_it) {
+			case '\\':
+				{
+					// skip over escaped quote if it exists
+					auto l_bump_it = std::next(l_lb_it, 1);
+					if (*l_bump_it == '"') {
+						l_ret += *l_lb_it;
+						++l_lb_it;
+						l_ret += *l_lb_it;
+						++l_lb_it;
+						continue;
+					} else {
+						// just a solitary backslash
+						l_ret += *l_lb_it;
+						++l_lb_it;
+						continue;
+					}
+					break;
+				}
+			case '\"':
+				l_inquotes = !l_inquotes;
+				break;
+			case ':':
+				if (!l_inquotes) {
+					l_ret += ' ';
+					l_ret += *l_lb_it;
+					l_ret += ' ';
+					++l_lb_it;
+					continue;
+				}
+				break;
+			case '{':
+			case '[':
+				if (!l_inquotes) {
+					l_ret += *l_lb_it;
+					l_ret += '\n';
+					l_tablevel++;
+					embed_tabs();
+					++l_lb_it;
+					continue;
+				}
+				break;
+			case '}':
+			case ']':
+				if (!l_inquotes) {
+					l_ret += '\n';
+					l_tablevel--;
+					embed_tabs();
+					l_ret += *l_lb_it;
+					++l_lb_it;
+					continue;
+				}
+				break;
+			case ',':
+				if (!l_inquotes) {
+					l_ret += *l_lb_it;
+					l_ret += '\n';
+					embed_tabs();
+					++l_lb_it;
+					continue;
+				}
+				break;
 		}
-		if ((i == '}') || (i == ']')) {
-			l_ret += '\n';
-			l_tablevel--;
-			embed_tabs();
-			l_ret += i;
-			continue;
-		}
-		if (i == ',') {
-			l_ret += i;
-			l_ret += '\n';
-			embed_tabs();
-			continue;
-		}
-		l_ret += i;
+		l_ret += *l_lb_it;
+		++l_lb_it;
 	}
 	l_ret += '\n'; // line break at the end for good measure
 	return l_ret;

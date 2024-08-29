@@ -135,8 +135,8 @@ std::string json_a::seal()
 {
 	return ss::json::comma_list(stringvalue_number("int_a", int_a),
 		stringvalue_number("int_b", int_b),
-		stringvalue_string("string_a", string_a),
-		stringvalue_string("string_b", string_b),
+		stringvalue_string("string a", string_a),
+		stringvalue_string("string b", string_b),
 		stringvalue_array(vec_a));
 }
 
@@ -155,7 +155,7 @@ public:
 std::string json_b::seal()
 {
 	return ss::json::comma_list(stringvalue_number("int_a", int_a),
-		stringvalue_number("f_a", f_a),
+		stringvalue_number("f, a", f_a),
 		stringvalue_number("f_b", f_b),
 		jsona_a.serialize(),
 		jsona_b.serialize());
@@ -179,6 +179,7 @@ int main(int argc, char **argv)
 			l_json_file.load_file(l_file.path());
 			std::string l_json = l_json_file.read_std_str(l_json_file.size());
 			try {
+				l_json = ss::json::make_human_readable(l_json);
 				ctx.log(std::format("processing json: {}", l_json));
 				ss::json::master_ptr l_master = ss::json::parse_json(l_json);
 				display_master(l_master);
@@ -189,7 +190,7 @@ int main(int argc, char **argv)
 	}
 	
 	// serialize json object graph
-	json_a ja1("ja_1");
+	json_a ja1("ja_1 \\\" \\yes");
 	ja1.int_a = 7;
 	ja1.int_b = 3;
 	ja1.string_a = "foo";
