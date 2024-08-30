@@ -16,12 +16,26 @@ icr::icr()
 
 icr::~icr()
 {
+	shutdown();
+}
+
+void icr::shutdown()
+{
 	// iterate list of files and process each one, with do_update set to true
 	std::vector<std::string>::iterator m_files_it = m_files.begin();
 	while (m_files_it != m_files.end()) {
 		process_file((*m_files_it), true);
 		++m_files_it;
-	}
+	}	
+}
+
+void icr::restart()
+{
+	shutdown();
+	m_categories.clear();
+	m_files.clear();
+	m_argv.clear();
+	m_exename = "";
 }
 
 void icr::set_keyvalue(const std::string& a_category, const std::string& a_key, const std::string& a_value)
