@@ -4,12 +4,15 @@ namespace ss {
 
 bool failure_services::sigint_handler_installed = false;
 std::function<void(void)> failure_services::sigint_handler;
+bool failure_services::sighup_handler_installed = false;
+std::function<void(void)> failure_services::sighup_handler;
 
 failure_services::failure_services()
 : m_handler_installed(false)
 , m_ignoring_signals(false)
 {
 	sigint_handler_installed = false;
+	sighup_handler_installed = false;
 }
 
 failure_services::~failure_services()
@@ -27,6 +30,12 @@ void failure_services::install_sigint_handler(std::function<void(void)> a_handle
 {
 	sigint_handler = a_handler;
 	sigint_handler_installed = true;
+}
+
+void failure_services::install_sighup_handler(std::function<void(void)> a_handler)
+{
+	sighup_handler = a_handler;
+	sighup_handler_installed = true;
 }
 
 void failure_services::temporarily_ignore_signals()
@@ -80,6 +89,10 @@ void failure_services::handle_signal(int signo)
 {
 	if ((signo == SIGINT) && sigint_handler_installed) {
 		sigint_handler();
+		return;
+	}
+	if ((signo == SIGHUP) && sighup_handler_installed) {
+		sighup_handler();
 		return;
 	}
 	std::cout << std::endl << std::endl;

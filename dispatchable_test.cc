@@ -1,8 +1,10 @@
 #include <iostream>
 #include <chrono>
+#include <thread>
 
 #include "dispatchable.h"
 #include "log.h"
+#include "fs.h"
 
 class manager : public ss::ccl::dispatchable {
 public:
@@ -46,13 +48,15 @@ void manager::halted()
 
 bool manager::dispatch()
 {
-	snooze();
+	std::this_thread::sleep_for(std::chrono::seconds(1));
 	ctx.log("manager::dispatch: doing nothing and loving it");
 	return true;
 }
 
 int main(int argc, char **argv)
 {
+	ss::failure_services& l_fs = ss::failure_services::get();
+	l_fs.install_signal_handler();
 	ss::log::ctx& ctx = ss::log::ctx::get();
 	ctx.register_thread("main");
 	std::shared_ptr<ss::log::target_stdout> l_stdout =
@@ -60,12 +64,27 @@ int main(int argc, char **argv)
 	ctx.add_target(l_stdout, "default");
 	ctx.log("creating manager instance...");
 	manager m("manager");
+	
+	auto ctrlc = [&]() {
+		ctx.log("ctrl-c pressed...");
+		ctx.log("stopping manager...");
+		m.halt();
+		exit(EXIT_SUCCESS);
+	};
+	
+	
+	auto hup = [&]() {
+		ctx.log("caught SIGHUP...");
+	};
+	
+	l_fs.install_sigint_handler(ctrlc);
+	l_fs.install_sighup_handler(hup);
+	
 	ctx.log("starting manager...");
 	m.start();
 	ctx.log("sleeping...");
-	std::this_thread::sleep_for(std::chrono::seconds(1));
-	ctx.log("stopping manager...");
-	m.halt();
+	while (1)
+		std::this_thread::sleep_for(std::chrono::seconds(1));
 	return 0;
 }
 
