@@ -9,7 +9,7 @@ UNAME = $(shell uname)
 CC = gcc
 CPP = g++
 LD = g++
-LDFLAGS = -Wl,-rpath,./libss2x -Wl,-rpath=/usr/local/lib64 -L./libss2x -lpthread -lss2x -lstdc++exp
+LDFLAGS = -Wl,-rpath,./libss2x -L./libss2x -lpthread -lss2x -lstdc++exp
 TARGET = ss2x
 OBJS = ss2x.o
 
