@@ -10,9 +10,9 @@ CC = gcc
 CPP = g++
 LD = g++
 LDFLAGS = -Wl,-rpath,./libss2x -L./libss2x -lpthread -lss2x -lstdc++exp
-TARGET = ss2x
-OBJS = ss2x.o
 
+SS2X_TARGET = ss2x
+SS2X_OBJS = ss2x.o
 DT_OBJS = dispatchable_test.o
 DT_TARGET = dispatchable_test
 TT_OBJS = thread_test.o
@@ -31,15 +31,14 @@ AES_TEST_OBJS = aes_test.o
 AES_TEST_TARGET = aes_test
 
 all:
-	$(MAKE) $(TARGET)
-	$(MAKE) $(DT_TARGET) $(TT_TARGET) $(ND_TARGET) $(JSON_TARGET) $(ROT_TARGET) $(BF_TEST_TARGET) $(BF7_TEST_TARGET) $(AES_TEST_TARGET)
-
-$(TARGET): $(OBJS)
-
 	@if ! test -f $(BUILD_NUMBER_FILE); then echo 0 > $(BUILD_NUMBER_FILE); fi
 	@echo $$(($$(cat $(BUILD_NUMBER_FILE)) + 1)) > $(BUILD_NUMBER_FILE)
 	@if ! test -f ./libss2x/libss2x.so.1.0.0 ; then $(MAKE) -C libss2x; fi
-	$(LD) $(OBJS) -o $(TARGET) $(LDFLAGS)
+	$(MAKE) $(SS2X_TARGET) $(DT_TARGET) $(TT_TARGET) $(ND_TARGET) $(JSON_TARGET) $(ROT_TARGET) $(BF_TEST_TARGET) $(BF7_TEST_TARGET) $(AES_TEST_TARGET)
+
+$(SS2X_TARGET): $(SS2X_OBJS)
+
+	$(LD) $(SS2X_OBJS) -o $(SS2X_TARGET) $(LDFLAGS)
 
 $(DT_TARGET): $(DT_OBJS)
 
@@ -82,7 +81,7 @@ $(AES_TEST_TARGET): $(AES_TEST_OBJS)
 clean:
 	rm -f *.o
 	rm -f *~
-	rm -f $(TARGET)
+	rm -f $(SS2X_TARGET)
 	rm -f $(DT_TARGET) 
 	rm -f $(TT_TARGET)
 	rm -f $(ND_TARGET)

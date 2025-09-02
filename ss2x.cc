@@ -13,7 +13,7 @@
 #include "data.h"
 #include "fs.h"
 
-#define FILE_COMPRESS 1
+#define FILE_COMPRESS 0
 
 typedef struct {
 	std::uint64_t key;
