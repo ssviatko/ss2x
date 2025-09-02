@@ -30,12 +30,15 @@ BF7_TEST_TARGET = bf7_test
 AES_TEST_OBJS = aes_test.o
 AES_TEST_TARGET = aes_test
 
-all: $(TARGET) $(DT_TARGET) $(TT_TARGET) $(ND_TARGET) $(JSON_TARGET) $(ROT_TARGET) $(BF_TEST_TARGET) $(BF7_TEST_TARGET) $(AES_TEST_TARGET)
+all:
+	$(MAKE) $(TARGET)
+	$(MAKE) $(DT_TARGET) $(TT_TARGET) $(ND_TARGET) $(JSON_TARGET) $(ROT_TARGET) $(BF_TEST_TARGET) $(BF7_TEST_TARGET) $(AES_TEST_TARGET)
 
 $(TARGET): $(OBJS)
 
 	@if ! test -f $(BUILD_NUMBER_FILE); then echo 0 > $(BUILD_NUMBER_FILE); fi
 	@echo $$(($$(cat $(BUILD_NUMBER_FILE)) + 1)) > $(BUILD_NUMBER_FILE)
+	@if ! test -f ./libss2x/libss2x.so.1.0.0 ; then $(MAKE) -C libss2x; fi
 	$(LD) $(OBJS) -o $(TARGET) $(LDFLAGS)
 
 $(DT_TARGET): $(DT_OBJS)
@@ -88,4 +91,5 @@ clean:
 	rm -f $(BF_TEST_TARGET)
 	rm -f $(BF7_TEST_TARGET)
 	rm -f $(AES_TEST_TARGET)
-	
+	cd libss2x && $(MAKE) clean
+
