@@ -4,7 +4,7 @@ UNAME := $(shell uname)
 CC := gcc
 CPP := g++
 LD := g++
-LDFLAGS = -lpthread -Wl,-rpath=/usr/local/lib64 -shared -Wl,-soname,libss2x.so.1 -rdynamic -lstdc++exp
+LDFLAGS = -lpthread -shared -Wl,-soname,libss2x.so.1 -rdynamic -lstdc++exp
 
 OBJS = aes.o ccl.o dispatchable.o bf.o data.o md5.o sha1.o sha2.o hmac.o fs.o icr.o log.o doubletime.o nd.o json.o
 TESTCASESOBJS = log-xterm-256colors.o
