@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="ss2x-test" Version="11000" InternalType="">
   <VirtualDirectory Name="ss2x-test">
+    <File Name="ss2x.cc"/>
     <File Name="aes_test.cc"/>
     <File Name="bf7_test.cc"/>
     <File Name="bf_test.cc"/>
