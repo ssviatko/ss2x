@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <sstream>
 #include <unordered_map>
 #include <array>
 #include <memory>
@@ -20,6 +21,7 @@
 
 namespace ss {
 
+// standard PC 16 colors
 const std::string COLOR_BLACK = "\033[30m";
 const std::string COLOR_RED = "\033[31m";
 const std::string COLOR_GREEN = "\033[32m";
@@ -36,7 +38,80 @@ const std::string COLOR_LIGHTBLUE = "\033[94m";
 const std::string COLOR_LIGHTMAGENTA = "\033[95m";
 const std::string COLOR_LIGHTCYAN = "\033[96m";
 const std::string COLOR_WHITE = "\033[97m";
-const std::string COLOR_DEFAULT = "\033[39m";
+const std::string COLOR_DEFAULT = "\033[39m\033[49m";
+const std::string COLOR_BG_BLACK = "\033[40m";
+const std::string COLOR_BG_RED = "\033[41m";
+const std::string COLOR_BG_GREEN = "\033[42m";
+const std::string COLOR_BG_YELLOW = "\033[43m";
+const std::string COLOR_BG_BLUE = "\033[44m";
+const std::string COLOR_BG_MAGENTA = "\033[45m";
+const std::string COLOR_BG_CYAN = "\033[46m";
+const std::string COLOR_BG_LIGHTGRAY = "\033[47m";
+const std::string COLOR_BG_DARKGRAY = "\033[100m";
+const std::string COLOR_BG_LIGHTRED = "\033[101m";
+const std::string COLOR_BG_LIGHTGREEN = "\033[102m";
+const std::string COLOR_BG_LIGHTYELLOW = "\033[103m";
+const std::string COLOR_BG_LIGHTBLUE = "\033[104m";
+const std::string COLOR_BG_LIGHTMAGENTA = "\033[105m";
+const std::string COLOR_BG_LIGHTCYAN = "\033[106m";
+const std::string COLOR_BG_WHITE = "\033[107m";
+const std::string COLOR_BG_DEFAULT = "\033[39m\033[49m";
+
+const std::array<std::string, 16> color = {
+	COLOR_BLACK, COLOR_RED, COLOR_GREEN, COLOR_YELLOW, COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN, COLOR_LIGHTGRAY,
+	COLOR_DARKGRAY, COLOR_LIGHTRED, COLOR_LIGHTGREEN, COLOR_LIGHTYELLOW, COLOR_LIGHTBLUE, COLOR_LIGHTMAGENTA,
+	COLOR_LIGHTCYAN, COLOR_WHITE
+};
+
+const std::array<std::string, 16> color_bg = {
+	COLOR_BG_BLACK, COLOR_BG_RED, COLOR_BG_GREEN, COLOR_BG_YELLOW, COLOR_BG_BLUE, COLOR_BG_MAGENTA, COLOR_BG_CYAN,
+	COLOR_BG_LIGHTGRAY,	COLOR_BG_DARKGRAY, COLOR_BG_LIGHTRED, COLOR_BG_LIGHTGREEN, COLOR_BG_LIGHTYELLOW,
+	COLOR_BG_LIGHTBLUE, COLOR_BG_LIGHTMAGENTA, COLOR_BG_LIGHTCYAN, COLOR_BG_WHITE
+};
+
+// Apple IIgs standard colors
+
+const std::uint8_t gs_standard_colors[][3] = {
+    { 0x00, 0x00, 0x00 }, // Black
+    { 0xdd, 0x00, 0x33 }, // Deep Red
+    { 0x00, 0x00, 0x99 }, // Dark Blue
+    { 0xdd, 0x22, 0xdd }, // Purple
+    { 0x00, 0x77, 0x22 }, // Dark Green
+    { 0x55, 0x55, 0x55 }, // Dark Gray
+    { 0x22, 0x22, 0xff }, // Medium Blue
+    { 0x66, 0xaa, 0xff }, // Light Blue
+    { 0x88, 0x55, 0x00 }, // Brown
+    { 0xff, 0x66, 0x00 }, // Orange
+    { 0xaa, 0xaa, 0xaa }, // Light Gray
+    { 0xff, 0x99, 0x88 }, // Pink
+    { 0x11, 0xdd, 0x00 }, // Light Green
+    { 0xff, 0xff, 0x00 }, // Yellow
+    { 0x44, 0xff, 0x99 }, // Aquamarine
+    { 0xff, 0xff, 0xff }  // White
+};
+
+const std::unordered_map<std::string, unsigned int> color_gs_names = {
+	{ "BLACK", 0 },
+	{ "RED", 1 },
+	{ "BLUE", 2 },
+	{ "PURPLE", 3 },
+	{ "DARKGREEN", 4 },
+	{ "DARKGRAY", 5 },
+	{ "MEDIUMBLUE", 6 },
+	{ "LIGHTBLUE", 7 },
+	{ "BROWN", 8 },
+	{ "ORANGE", 9 },
+	{ "LIGHTGRAY", 10 },
+	{ "PINK", 11 },
+	{ "LIGHTGREEN", 12 },
+	{ "YELLOW", 13 },
+	{ "AQUAMARINE", 14 },
+	{ "WHITE", 15 }
+};
+
+std::string color_gs(unsigned int a_color);
+std::string color_gs_bg(unsigned int a_color);
+unsigned int color_gs_name(std::string a_name);
 
 namespace log {
 

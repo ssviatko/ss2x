@@ -29,12 +29,14 @@ BF7_TEST_OBJS = bf7_test.o
 BF7_TEST_TARGET = bf7_test
 AES_TEST_OBJS = aes_test.o
 AES_TEST_TARGET = aes_test
+COLORTERM_TEST_OBJS = colorterm_test.o
+COLORTERM_TEST_TARGET = colorterm_test
 
 all:
 	@if ! test -f $(BUILD_NUMBER_FILE); then echo 0 > $(BUILD_NUMBER_FILE); fi
 	@echo $$(($$(cat $(BUILD_NUMBER_FILE)) + 1)) > $(BUILD_NUMBER_FILE)
 	@if ! test -f ./libss2x/libss2x.so.1.0.0 ; then $(MAKE) -C libss2x; fi
-	$(MAKE) $(SS2X_TARGET) $(DT_TARGET) $(TT_TARGET) $(ND_TARGET) $(JSON_TARGET) $(ROT_TARGET) $(BF_TEST_TARGET) $(BF7_TEST_TARGET) $(AES_TEST_TARGET)
+	$(MAKE) $(SS2X_TARGET) $(DT_TARGET) $(TT_TARGET) $(ND_TARGET) $(JSON_TARGET) $(ROT_TARGET) $(BF_TEST_TARGET) $(BF7_TEST_TARGET) $(AES_TEST_TARGET) $(COLORTERM_TEST_TARGET)
 
 $(SS2X_TARGET): $(SS2X_OBJS)
 
@@ -72,6 +74,10 @@ $(AES_TEST_TARGET): $(AES_TEST_OBJS)
 
 	$(LD) $(AES_TEST_OBJS) -o $(AES_TEST_TARGET) $(LDFLAGS)
 
+$(COLORTERM_TEST_TARGET): $(COLORTERM_TEST_OBJS)
+
+	$(LD) $(COLORTERM_TEST_OBJS) -o $(COLORTERM_TEST_TARGET) $(LDFLAGS)
+	
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
 
@@ -90,5 +96,6 @@ clean:
 	rm -f $(BF_TEST_TARGET)
 	rm -f $(BF7_TEST_TARGET)
 	rm -f $(AES_TEST_TARGET)
+	rm -f $(COLORTERM_TEST_TARGET)
 	cd libss2x && $(MAKE) clean
 

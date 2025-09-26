@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="libss2x" Version="11000" InternalType="">
   <VirtualDirectory Name="libss2x">
+    <File Name="log-xterm-256colors.c"/>
     <File Name="aes.c"/>
     <File Name="aes.h"/>
     <File Name="hmac.c"/>

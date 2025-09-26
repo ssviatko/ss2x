@@ -2,6 +2,39 @@
 
 namespace ss {
 
+// color routines
+// provide strings for ANSI character insertion
+
+std::string color_gs(unsigned int a_color)
+{
+	std::stringstream l_str;
+	l_str << "\033[38;2;";
+	l_str << (int)gs_standard_colors[a_color][0] << ";";
+	l_str << (int)gs_standard_colors[a_color][1] << ";";
+	l_str << (int)gs_standard_colors[a_color][2] << "m";
+	return l_str.str();
+}
+
+std::string color_gs_bg(unsigned int a_color)
+{
+	std::stringstream l_str;
+	l_str << "\033[48;2;";
+	l_str << (int)gs_standard_colors[a_color][0] << ";";
+	l_str << (int)gs_standard_colors[a_color][1] << ";";
+	l_str << (int)gs_standard_colors[a_color][2] << "m";
+	return l_str.str();
+}
+
+unsigned int color_gs_name(std::string a_name)
+{
+	// return white if we can't make sense of the color
+	std::unordered_map<std::string, unsigned int>::const_iterator l_it = color_gs_names.find(a_name);
+	if (l_it == color_gs_names.end())
+		return 15;
+	else
+		return l_it->second;
+}
+
 namespace log {
 
 // target_base
