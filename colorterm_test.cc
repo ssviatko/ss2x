@@ -83,15 +83,14 @@ int main(int argc, char **argv)
 		std::cout << std::endl;
 	}
 	
-	std::cout << "RGB colors (abridged to 4096)" << std::endl;
-	for (unsigned int r = 0; r <= 0xff; r += 0x11) {
-		for (unsigned int g = 0; g <= 0xff; g += 0x11) {
-			for (unsigned int b = 0; b <= 0xff; b += 0x11) {
+	std::cout << "RGB colors (abridged to 216)" << std::endl;
+	for (unsigned int r = 0; r <= 0xff; r += 51) {
+		for (unsigned int g = 0; g <= 0xff; g += 51) {
+			for (unsigned int b = 0; b <= 0xff; b += 51) {
 				std::cout << ss::color_rgb(r, g, b) << "@" << ss::COLOR_DEFAULT;
 			}
-			if ((g == 0x77) || (g == 0xff))
-				std::cout << std::endl;
 		}
+		std::cout << std::endl;
 	}
 	std::cout << std::endl;
 	
