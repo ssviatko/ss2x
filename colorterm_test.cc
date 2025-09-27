@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 
 #include "log.h"
 
@@ -69,6 +70,30 @@ int main(int argc, char **argv)
 	std::cout << ss::color_gs(ss::color_gs_name("YELLOW")) << "This is a nice shade of yellow" << ss::COLOR_DEFAULT << std::endl;
 	std::cout << ss::color_gs(ss::color_gs_name("AQUAMARINE")) << "This is a nice shade of aquamarine" << ss::COLOR_DEFAULT << std::endl;
 	std::cout << ss::color_gs(ss::color_gs_name("WHITE")) << "This is a nice shade of white" << ss::COLOR_DEFAULT << std::endl;
+	
+	std::cout << "256 colors" << std::endl;
+	for (unsigned int i = 0; i < 256; ++i) {
+		std::cout << ss::color_256(i) << " " << std::setw(3) << std::setfill('0') << i << ss::COLOR_DEFAULT;
+	}
+	std::cout << ss::COLOR_DEFAULT << " " << std::endl;
+	for (unsigned int j = 0; j < 8; ++j) {
+		for (unsigned int i = 0; i < 32; ++i) {
+			std::cout << ss::color_256_bg(i + (32 * j)) << ss::color_256(15) << " " << std::setw(3) << std::setfill('0') << i + (32 * j) << " " << ss::COLOR_DEFAULT;
+		}
+		std::cout << std::endl;
+	}
+	
+	std::cout << "RGB colors (abridged to 4096)" << std::endl;
+	for (unsigned int r = 0; r <= 0xff; r += 0x11) {
+		for (unsigned int g = 0; g <= 0xff; g += 0x11) {
+			for (unsigned int b = 0; b <= 0xff; b += 0x11) {
+				std::cout << ss::color_rgb(r, g, b) << "@" << ss::COLOR_DEFAULT;
+			}
+			if ((g == 0x77) || (g == 0xff))
+				std::cout << std::endl;
+		}
+	}
+	std::cout << std::endl;
 	
 	return 0;
 }

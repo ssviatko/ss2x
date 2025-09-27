@@ -112,6 +112,12 @@ const std::unordered_map<std::string, unsigned int> color_gs_names = {
 std::string color_gs(unsigned int a_color);
 std::string color_gs_bg(unsigned int a_color);
 unsigned int color_gs_name(std::string a_name);
+std::string color_256(unsigned int a_color);
+std::string color_256_bg(unsigned int a_color);
+std::string color_rgb(std::uint32_t a_color);
+std::string color_rgb(std::uint8_t a_red, std::uint8_t a_green, std::uint8_t a_blue);
+std::string color_rgb_bg(std::uint32_t a_color);
+std::string color_rgb_bg(std::uint8_t a_red, std::uint8_t a_green, std::uint8_t a_blue);
 
 namespace log {
 

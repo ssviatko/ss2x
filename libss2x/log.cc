@@ -35,6 +35,52 @@ unsigned int color_gs_name(std::string a_name)
 		return l_it->second;
 }
 
+std::string color_256(unsigned int a_color)
+{
+	std::stringstream l_ss;
+	l_ss << "\033[38;5;" << a_color << "m";
+	return l_ss.str();
+}
+
+std::string color_256_bg(unsigned int a_color)
+{
+	std::stringstream l_ss;
+	l_ss << "\033[48;5;" << a_color << "m";
+	return l_ss.str();	
+}
+
+std::string color_rgb(std::uint32_t a_color)
+{
+	a_color &= 0xffffff;
+	return color_rgb(((a_color & 0xff0000) >> 16), ((a_color & 0x00ff00) >> 8), (a_color & 0xff));
+}
+
+std::string color_rgb(std::uint8_t a_red, std::uint8_t a_green, std::uint8_t a_blue)
+{
+	std::stringstream l_str;
+	l_str << "\033[38;2;";
+	l_str << (int)a_red << ";";
+	l_str << (int)a_green << ";";
+	l_str << (int)a_blue << "m";
+	return l_str.str();
+}
+
+std::string color_rgb_bg(std::uint32_t a_color)
+{
+	a_color &= 0xffffff;
+	return color_rgb_bg(((a_color & 0xff0000) >> 16), ((a_color & 0x00ff00) >> 8), (a_color & 0xff));
+}
+
+std::string color_rgb_bg(std::uint8_t a_red, std::uint8_t a_green, std::uint8_t a_blue)
+{
+	std::stringstream l_str;
+	l_str << "\033[48;2;";
+	l_str << (int)a_red << ";";
+	l_str << (int)a_green << ";";
+	l_str << (int)a_blue << "m";
+	return l_str.str();
+}
+
 namespace log {
 
 // target_base
