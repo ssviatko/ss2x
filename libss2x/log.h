@@ -92,8 +92,8 @@ const std::uint8_t gs_standard_colors[][3] = {
 
 const std::unordered_map<std::string, unsigned int> color_gs_names = {
 	{ "BLACK", 0 },
-	{ "RED", 1 },
-	{ "BLUE", 2 },
+	{ "DEEPRED", 1 },
+	{ "DARKBLUE", 2 },
 	{ "PURPLE", 3 },
 	{ "DARKGREEN", 4 },
 	{ "DARKGRAY", 5 },

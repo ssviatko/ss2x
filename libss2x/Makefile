@@ -7,12 +7,8 @@ LD := g++
 LDFLAGS = -lpthread -shared -Wl,-soname,libss2x.so.1 -rdynamic -lstdc++exp
 
 OBJS = aes.o ccl.o dispatchable.o bf.o data.o md5.o sha1.o sha2.o hmac.o fs.o icr.o log.o doubletime.o nd.o json.o
-TESTCASESOBJS = log-xterm-256colors.o
 
-all: libss2x test-cases
-
-test-cases: $(TESTCASESOBJS)
-	$(LD) log-xterm-256colors.o -o log-xterm-256colors
+all: libss2x
 
 libss2x: $(OBJS)
 
@@ -35,5 +31,4 @@ clean:
 	rm -f libss2x.so.1.0.0
 	rm -f libss2x.so.1
 	rm -f libss2x.so
-	rm -f log-xterm-256colors
 
