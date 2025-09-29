@@ -124,6 +124,9 @@ int main(int argc, char **argv)
 	l_stdout->set_enable_color(false);
 	ctx.log("this should be in monochrome");
 	l_stdout->set_enable_color(true);
+	ctx.log(ss::color_rgb_blend("Colored log messages are so much prettier aren't they?", 255, 155, 0, 0, 255, 220));
+	ctx.log(ss::color_rgb_blend("while this is neat, color blends and add on functions from log.h will cause ANSI codes to wind up in files and the syslog.", 255, 155, 0, 0, 255, 220));
+	ctx.log(ss::color_rgb_blend("that's why you should use the built-in macros with the %-signs instead in production environments.", 255, 155, 0, 0, 255, 220));
 	ctx.log("spin up a file logger to ss2x.log");
 	std::shared_ptr<ss::log::target_file> l_file = std::make_shared<ss::log::target_file>("ss2x.log", ss::log::DEBUG, ss::log::target_file::DEFAULT_FORMATTER_DEBUGINFO);
 	ctx.add_target(l_file, "filetest");
