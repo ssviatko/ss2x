@@ -95,9 +95,9 @@ std::string color_rgb_blend(std::string a_str, std::uint8_t a_begin_red, std::ui
 	}
 	// at least 2 chars long so blend it
 	for (unsigned int i = 0; i < a_str.size(); ++i) {
-		double l_red = (double)a_begin_red + ((((double)a_end_red - (double)a_begin_red) / (double)l_strlen) * (double)i);
-		double l_green = (double)a_begin_green + ((((double)a_end_green - (double)a_begin_green) / (double)l_strlen) * (double)i);
-		double l_blue = (double)a_begin_blue + ((((double)a_end_blue - (double)a_begin_blue) / (double)l_strlen) * (double)i);
+		double l_red = (double)a_begin_red + ((((double)a_end_red - (double)a_begin_red) / (double)(l_strlen - 1)) * (double)i);
+		double l_green = (double)a_begin_green + ((((double)a_end_green - (double)a_begin_green) / (double)(l_strlen - 1)) * (double)i);
+		double l_blue = (double)a_begin_blue + ((((double)a_end_blue - (double)a_begin_blue) / (double)(l_strlen - 1)) * (double)i);
 		if (a_background)
 			l_ret += ss::color_rgb_bg((std::uint8_t)l_red, (std::uint8_t)l_green, (std::uint8_t)l_blue);
 		else

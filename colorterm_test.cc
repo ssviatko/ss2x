@@ -121,6 +121,11 @@ int main(int argc, char **argv)
 		}
 		std::cout << std::endl;
 	}
-	
+// check fix for "off by one" error in blend algorithm
+//	std::cout << ss::color_rgb_blend("%%", 255, 0, 0, 0, 0, 255);
+//	std::cout << ss::color_rgb_blend("%%%", 255, 0, 0, 0, 0, 255);
+//	std::cout << ss::color_rgb_blend("%%%%", 255, 0, 0, 0, 0, 255);
+//	std::cout << ss::color_rgb_blend("%%%%%", 255, 0, 0, 0, 0, 255);
+//	std::cout << ss::color_rgb_blend("%%%%%%", 255, 0, 0, 0, 0, 255);
 	return 0;
 }
