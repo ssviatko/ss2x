@@ -81,6 +81,33 @@ std::string color_rgb_bg(std::uint8_t a_red, std::uint8_t a_green, std::uint8_t 
 	return l_str.str();
 }
 
+std::string color_rgb_blend(std::string a_str, std::uint8_t a_begin_red, std::uint8_t a_begin_green, std::uint8_t a_begin_blue,
+						std::uint8_t a_end_red, std::uint8_t a_end_green, std::uint8_t a_end_blue, bool a_background)
+{
+	unsigned int l_strlen = a_str.size();
+	if (l_strlen == 0)
+		return "";
+	std::string l_ret; 
+	if (l_strlen == 1) {
+		l_ret += ss::color_rgb(a_begin_red, a_begin_green, a_begin_blue);
+		l_ret += a_str;
+		return l_ret;
+	}
+	// at least 2 chars long so blend it
+	for (unsigned int i = 0; i < a_str.size(); ++i) {
+		double l_red = (double)a_begin_red + ((((double)a_end_red - (double)a_begin_red) / (double)l_strlen) * (double)i);
+		double l_green = (double)a_begin_green + ((((double)a_end_green - (double)a_begin_green) / (double)l_strlen) * (double)i);
+		double l_blue = (double)a_begin_blue + ((((double)a_end_blue - (double)a_begin_blue) / (double)l_strlen) * (double)i);
+		if (a_background)
+			l_ret += ss::color_rgb_bg((std::uint8_t)l_red, (std::uint8_t)l_green, (std::uint8_t)l_blue);
+		else
+			l_ret += ss::color_rgb((std::uint8_t)l_red, (std::uint8_t)l_green, (std::uint8_t)l_blue);
+		l_ret += a_str[i];
+	}
+	l_ret += COLOR_DEFAULT;
+	return l_ret;
+}
+
 namespace log {
 
 // target_base

@@ -5,7 +5,11 @@
 
 int main(int argc, char **argv)
 {
-	std::cout << "standard PC colors                                                       Standard GS colors" << std::endl;
+	std::cout << "standard PC colors    ";
+	std::cout << ss::color_rgb_blend("                                        ", 255, 232, 32, 240, 48, 255, true);
+	std::cout << "           Standard GS colors    ";
+	std::cout << ss::color_rgb_blend("                                        ", 10, 255, 32, 154, 100, 0, true);	
+	std::cout << std::endl;
 	for (int i = 0;  i < 16; ++i) {
 		std::cout << ss::color[i] << " * " << ss::COLOR_DEFAULT;
 	}
@@ -83,7 +87,9 @@ int main(int argc, char **argv)
 	std::cout << ss::color_gs(ss::color_gs_name("WHITE")) <<      "This is a nice shade of white       " << ss::COLOR_DEFAULT;
 	std::cout << ss::color_gs_bg(ss::color_gs_name("WHITE")) << ss::color_gs(0) <<      "This is a nice shade of white       " << ss::COLOR_DEFAULT << std::endl;
 	
-	std::cout << "256 colors" << std::endl;
+	std::cout << "256 colors    ";
+	std::cout << ss::color_rgb_blend("This is a gradual blend from color #90 (a tasty purple) to color #214 (a luscious shade of orange)",
+									102, 0, 102, 255, 153, 0) << std::endl;
 	for (unsigned int j = 0; j < 8; ++j) {
 		for (unsigned int i = 0; i < 32; ++i) {
 			std::cout << ss::color_256(i + (32 * j)) << " " << std::setw(3) << std::setfill('0') << (i + (32 * j))  << " " << ss::COLOR_DEFAULT;
@@ -97,7 +103,9 @@ int main(int argc, char **argv)
 		std::cout << std::endl;
 	}
 	
-	std::cout << "RGB colors (abridged to 216)" << std::endl;
+	std::cout << ss::color_rgb_blend("RGB colors (abridged to 216) with another demonstration of blending    ", 255, 0, 0, 0, 0, 255);
+	std::cout << ss::color_rgb_blend("Another demonstration of blending from a deep yellow to a rich green", 234, 255, 0, 0, 166, 32);
+	std::cout << std::endl;
 	for (unsigned int r = 0; r <= 0xff; r += 51) {
 		for (unsigned int g = 0; g <= 0xff; g += 51) {
 			for (unsigned int b = 0; b <= 0xff; b += 51) {

@@ -118,6 +118,8 @@ std::string color_rgb(std::uint32_t a_color);
 std::string color_rgb(std::uint8_t a_red, std::uint8_t a_green, std::uint8_t a_blue);
 std::string color_rgb_bg(std::uint32_t a_color);
 std::string color_rgb_bg(std::uint8_t a_red, std::uint8_t a_green, std::uint8_t a_blue);
+std::string color_rgb_blend(std::string a_str, std::uint8_t a_begin_red, std::uint8_t a_begin_green, std::uint8_t a_begin_blue,
+						std::uint8_t a_end_red, std::uint8_t a_end_green, std::uint8_t a_end_blue, bool a_background = false);
 
 namespace log {
 
